@@ -1300,12 +1300,12 @@ img, video, canvas { max-width: 100%; }
   .table-wrap table { min-width: 680px; }
   .table-head { position: sticky; left: 0; }
 
-  /* Nav: compact so the cart button never clips */
-  .nav-inner { padding: 0.75rem 1rem; gap: 0.5rem; }
-  .logo { font-size: 1.35rem; }
-  .nav-links { gap: 0.75rem; }
-  .nav-links a:not(.active) { display: none; }
-  .cart-btn { padding: 9px 13px; font-size: 0.8rem; white-space: nowrap; }
+  /* Nav: compact, but keep Shop AND Track Order visible on phones */
+  .nav-inner { padding: 0.75rem 0.85rem; gap: 0.5rem; }
+  .logo { font-size: 1.3rem; }
+  .nav-links { gap: 0.7rem; }
+  .nav-links a { font-size: 0.72rem; letter-spacing: 0.04em; white-space: nowrap; }
+  .cart-btn { padding: 9px 12px; font-size: 0.8rem; white-space: nowrap; }
 
   /* Section headings scale down + meta drops below cleanly */
   .section { padding: 2rem 1rem; }

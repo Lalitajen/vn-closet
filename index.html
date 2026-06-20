@@ -6,7 +6,7 @@
 <title>VN Closet · Pre-order Vietnam Fashion</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+Lao:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+Lao:wght@400;500;600&family=Phetsarath:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css">
 <style>
 :root {
@@ -80,6 +80,29 @@ nav {
 }
 .nav-links a:hover { color: var(--rose-dark); }
 .nav-links a.active { color: var(--rose-dark); border-bottom: 2px solid var(--rose-dark); padding-bottom: 4px; }
+.lang-toggle {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  padding: 7px 12px;
+  margin-left: auto;
+  margin-right: 10px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: rgba(26,22,18,0.45);
+  letter-spacing: 0.02em;
+  transition: border-color 0.2s ease;
+}
+.lang-toggle:hover { border-color: var(--ink); }
+.lang-toggle .lang-sep { margin: 0 4px; opacity: 0.4; }
+html[lang="lo"] .lang-toggle .lang-lo,
+html[lang="en"] .lang-toggle .lang-en { color: var(--ink); }
+html[lang="lo"] body, html[lang="lo"] button, html[lang="lo"] input,
+html[lang="lo"] textarea, html[lang="lo"] select {
+  font-family: 'Phetsarath', 'Noto Sans Lao', 'Outfit', sans-serif;
+}
 .cart-btn {
   background: var(--ink);
   color: var(--paper);
@@ -1558,13 +1581,16 @@ img, video, canvas { max-width: 100%; }
   <div class="nav-inner">
     <a class="logo" onclick="goto('home')" ondblclick="enableAdminMode()">vn<span>·</span>closet</a>
     <div class="nav-links">
-      <a id="nav-home" class="active" onclick="goto('home')">Shop</a>
-      <a id="nav-status" onclick="goto('status')">Track Order</a>
-      <a id="nav-admin" onclick="goto('admin')" style="display:none;">Admin</a>
+      <a id="nav-home" class="active" onclick="goto('home')" data-i18n="nav.shop">Shop</a>
+      <a id="nav-status" onclick="goto('status')" data-i18n="nav.track">Track Order</a>
+      <a id="nav-admin" onclick="goto('admin')" style="display:none;" data-i18n="nav.admin">Admin</a>
     </div>
+    <button class="lang-toggle" id="lang-toggle" onclick="toggleLang()" title="ປ່ຽນພາສາ / Change language">
+      <span class="lang-lo">ລາວ</span><span class="lang-sep">/</span><span class="lang-en">EN</span>
+    </button>
     <button class="cart-btn" onclick="openCart()">
       <i class="ti ti-shopping-bag"></i>
-      <span class="cart-label">Cart</span> <span class="cart-count" id="cart-count">0</span>
+      <span class="cart-label" data-i18n="nav.cart">Cart</span> <span class="cart-count" id="cart-count">0</span>
     </button>
   </div>
 </nav>
@@ -1574,13 +1600,13 @@ img, video, canvas { max-width: 100%; }
   <section class="hero">
     <div>
       <div class="hero-tags">
-        <span class="tag">Pre-order</span>
-        <span class="tag">From Vietnam</span>
-        <span class="tag">Hand-picked</span>
+        <span class="tag" data-i18n="hero.tag1">Pre-order</span>
+        <span class="tag" data-i18n="hero.tag2">From Vietnam</span>
+        <span class="tag" data-i18n="hero.tag3">Hand-picked</span>
       </div>
-      <h1>Saigon style, <em>delivered</em> to your door in Laos.</h1>
-      <p>Curated fashion from Vietnam's best markets. Pre-order today, we source it personally, and ship it to you via HAL Logistics or Anousith Express.</p>
-      <button class="btn-secondary" onclick="document.getElementById('products-section').scrollIntoView({behavior:'smooth'})">
+      <h1 data-i18n-html="hero.title">Saigon style, <em>delivered</em> to your door in Laos.</h1>
+      <p data-i18n="hero.sub">Curated fashion from Vietnam's best markets. Pre-order today, we source it personally, and ship it to you via HAL Logistics or Anousith Express.</p>
+      <button class="btn-secondary" data-i18n="hero.browse" onclick="document.getElementById('products-section').scrollIntoView({behavior:'smooth'})">
         Browse the collection →
       </button>
     </div>
@@ -1598,7 +1624,7 @@ img, video, canvas { max-width: 100%; }
     <div id="collection-teaser" style="display:none; margin-bottom:2rem;">
       <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:linear-gradient(135deg, var(--cream), #efe6d8); border:1px solid var(--line); border-left:3px solid var(--rose-dark); border-radius:10px; padding:14px 18px;">
         <i class="ti ti-sparkles" style="color:var(--rose-dark); font-size:1.3rem;"></i>
-        <span style="font-size:0.66rem; letter-spacing:0.12em; text-transform:uppercase; font-weight:700; color:var(--rose-dark); background:rgba(160,95,73,0.12); padding:4px 10px; border-radius:99px; white-space:nowrap;">Coming soon</span>
+        <span data-i18n="col.soon" style="font-size:0.66rem; letter-spacing:0.12em; text-transform:uppercase; font-weight:700; color:var(--rose-dark); background:rgba(160,95,73,0.12); padding:4px 10px; border-radius:99px; white-space:nowrap;">Coming soon</span>
         <span class="ct-text" style="font-size:0.92rem; color:var(--ink); line-height:1.5; flex:1; min-width:180px;"></span>
       </div>
       <div class="ct-slider" id="ct-slider" style="display:none;">
@@ -1606,8 +1632,8 @@ img, video, canvas { max-width: 100%; }
       </div>
     </div>
     <div class="section-head">
-      <h2>The <em>Collection</em></h2>
-      <div class="meta">Updated weekly</div>
+      <h2 data-i18n-html="col.title">The <em>Collection</em></h2>
+      <div class="meta" data-i18n="col.updated">Updated weekly</div>
     </div>
     <div class="cat-filter-bar" id="cat-filter-bar"></div>
     <div class="products" id="products-grid"></div>
@@ -1617,8 +1643,8 @@ img, video, canvas { max-width: 100%; }
   <section class="testimonials-section" id="testimonials-section">
     <div class="testimonials-inner">
       <div class="section-head">
-        <h2>What our <em>customers</em> say</h2>
-        <div class="meta">Real reviews from Laos</div>
+        <h2 data-i18n-html="testi.title">What our <em>customers</em> say</h2>
+        <div class="meta" data-i18n="testi.meta">Real reviews from Laos</div>
       </div>
       <div class="testimonials-grid" id="testimonials-grid"></div>
     </div>
@@ -1626,27 +1652,27 @@ img, video, canvas { max-width: 100%; }
 
   <section class="how">
     <div class="how-inner">
-      <h2>How <em>pre-order</em> works</h2>
+      <h2 data-i18n-html="how.title">How <em>pre-order</em> works</h2>
       <div class="steps">
         <div class="step">
           <div class="step-num">01</div>
-          <h3>Pick &amp; pay</h3>
-          <p>Choose your items, fill the form, and pay a 50% deposit via BCEL One QR to confirm.</p>
+          <h3 data-i18n="how.s1t">Pick &amp; pay</h3>
+          <p data-i18n="how.s1p">Choose your items, fill the form, and pay a 50% deposit via BCEL One QR to confirm.</p>
         </div>
         <div class="step">
           <div class="step-num">02</div>
-          <h3>We source</h3>
-          <p>We personally buy your items at Vietnamese markets within 3–5 days.</p>
+          <h3 data-i18n="how.s2t">We source</h3>
+          <p data-i18n="how.s2p">We personally buy your items at Vietnamese markets within 3–5 days.</p>
         </div>
         <div class="step">
           <div class="step-num">03</div>
-          <h3>Ship to Laos</h3>
-          <p>HAL Logistics handles customs. Anousith forwards to your province. Allow 7–14 days total.</p>
+          <h3 data-i18n="how.s3t">Ship to Laos</h3>
+          <p data-i18n="how.s3p">HAL Logistics handles customs. Anousith forwards to your province. Allow 7–14 days total.</p>
         </div>
         <div class="step">
           <div class="step-num">04</div>
-          <h3>Delivered</h3>
-          <p>Pick up at the nearest branch or get door-to-door delivery.</p>
+          <h3 data-i18n="how.s4t">Delivered</h3>
+          <p data-i18n="how.s4p">Pick up at the nearest branch or get door-to-door delivery.</p>
         </div>
       </div>
     </div>
@@ -1657,15 +1683,15 @@ img, video, canvas { max-width: 100%; }
 <div class="page" id="page-status">
   <section class="section" style="max-width: 720px;">
     <div class="section-head">
-      <h2>Track your <em>order</em></h2>
-      <div class="meta">Enter your phone</div>
+      <h2 data-i18n-html="status.title">Track your <em>order</em></h2>
+      <div class="meta" data-i18n="status.meta">Enter your phone</div>
     </div>
     <div class="field">
-      <label>Phone number</label>
+      <label data-i18n="status.phone">Phone number</label>
       <input type="tel" id="track-phone" placeholder="020XXXXXXXX">
     </div>
     <button class="btn-primary" onclick="trackOrders()">
-      <i class="ti ti-search"></i> Find my orders
+      <i class="ti ti-search"></i> <span data-i18n="status.find">Find my orders</span>
     </button>
     <div id="track-results" style="margin-top: 2rem;"></div>
   </section>
@@ -2539,16 +2565,16 @@ img, video, canvas { max-width: 100%; }
 <div class="modal-bg" id="modal-cart">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('modal-cart')"><i class="ti ti-x"></i></button>
-    <h3 class="serif">Your <em style="color: var(--rose-dark)">cart</em></h3>
-    <p class="modal-meta">Review before checkout</p>
+    <h3 class="serif" data-i18n-html="cart.title">Your <em style="color: var(--rose-dark)">cart</em></h3>
+    <p class="modal-meta" data-i18n="cart.review">Review before checkout</p>
     <div id="cart-items"></div>
-    <div id="cart-empty" style="text-align: center; padding: 2rem 0; color: rgba(26,22,18,0.5);">Your cart is empty</div>
+    <div id="cart-empty" data-i18n="cart.empty" style="text-align: center; padding: 2rem 0; color: rgba(26,22,18,0.5);">Your cart is empty</div>
     <div id="cart-checkout" style="display:none;">
-      <div class="cart-total"><span>Total</span><span id="cart-total-val">0 ₭</span></div>
+      <div class="cart-total"><span data-i18n="cart.total">Total</span><span id="cart-total-val">0 ₭</span></div>
       <div class="deposit-info">
-        <i class="ti ti-info-circle" style="color: var(--rose-dark);"></i> <strong>Pre-order policy:</strong> A 50% deposit confirms your order. The rest is due when your items arrive in Laos (7–14 days).
+        <i class="ti ti-info-circle" style="color: var(--rose-dark);"></i> <span data-i18n-html="cart.policy"><strong>Pre-order policy:</strong> A 50% deposit confirms your order. The rest is due when your items arrive in Laos (7–14 days).</span>
       </div>
-      <button class="btn-primary" onclick="openCheckout()"><i class="ti ti-arrow-right"></i> Continue to checkout</button>
+      <button class="btn-primary" onclick="openCheckout()"><i class="ti ti-arrow-right"></i> <span data-i18n="cart.continue">Continue to checkout</span></button>
     </div>
   </div>
 </div>
@@ -2557,31 +2583,31 @@ img, video, canvas { max-width: 100%; }
 <div class="modal-bg" id="modal-checkout">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('modal-checkout')"><i class="ti ti-x"></i></button>
-    <h3 class="serif">Place your <em style="color: var(--rose-dark)">pre-order</em></h3>
-    <p class="modal-meta">We'll text you on Telegram/WhatsApp once your items ship.</p>
+    <h3 class="serif" data-i18n-html="co.title">Place your <em style="color: var(--rose-dark)">pre-order</em></h3>
+    <p class="modal-meta" data-i18n="co.meta">We'll text you on Telegram/WhatsApp once your items ship.</p>
 
     <div class="field-row">
-      <div class="field"><label>Full name *</label><input id="co-name" required></div>
-      <div class="field"><label>Phone (WhatsApp) *</label><input id="co-phone" placeholder="020XXXXXXXX" required></div>
+      <div class="field"><label data-i18n="co.name">Full name *</label><input id="co-name" required></div>
+      <div class="field"><label data-i18n="co.phone">Phone (WhatsApp) *</label><input id="co-phone" placeholder="020XXXXXXXX" required></div>
     </div>
-    <div class="field"><label>Village, district, province *</label><input id="co-addr" required></div>
+    <div class="field"><label data-i18n="co.addr">Village, district, province *</label><input id="co-addr" required></div>
 
     <div class="field">
-      <label>Logistics *</label>
+      <label data-i18n="co.logistics">Logistics *</label>
       <select id="co-logistics">
         <option value="HAL Logistics">HAL Logistics (Vientiane + customs) — recommended</option>
         <option value="Anousith Express">Anousith Express (provinces)</option>
       </select>
     </div>
 
-    <div class="field"><label>Facebook / TikTok handle (optional)</label><input id="co-social" placeholder="@your_handle"></div>
-    <div class="field"><label>Special notes (optional)</label><textarea id="co-notes" rows="2"></textarea></div>
+    <div class="field"><label data-i18n="co.social">Facebook / TikTok handle (optional)</label><input id="co-social" placeholder="@your_handle"></div>
+    <div class="field"><label data-i18n="co.notes">Special notes (optional)</label><textarea id="co-notes" rows="2"></textarea></div>
 
     <div class="deposit-info" style="margin-top: 1rem;">
       <strong>Payment:</strong> A <strong>50% deposit of <span id="co-deposit-display">0 ₭</span></strong> is required to confirm your order. The remaining <span id="co-remaining-display">0 ₭</span> is due when your items arrive in Laos.
     </div>
 
-    <button class="btn-primary" onclick="submitOrder()"><i class="ti ti-check"></i> Place pre-order</button>
+    <button class="btn-primary" onclick="submitOrder()"><i class="ti ti-check"></i> <span data-i18n="co.place">Place pre-order</span></button>
   </div>
 </div>
 
@@ -2592,7 +2618,7 @@ img, video, canvas { max-width: 100%; }
     <div style="text-align:center; margin-bottom:1.2rem;">
       <i class="ti ti-circle-check" style="font-size:2.5rem; color:#1D9E75; display:block; margin-bottom:8px;"></i>
       <h3 class="serif">Order <span id="pay-order-id" style="color:var(--rose-dark);"></span> placed!</h3>
-      <p class="modal-meta">Please complete payment to confirm your pre-order.</p>
+      <p class="modal-meta" data-i18n="pay.confirmMeta">Please complete payment to confirm your pre-order.</p>
     </div>
 
     <div style="background:var(--cream); padding:12px 16px; border-radius:6px; text-align:center; margin-bottom:1.2rem;">
@@ -2602,19 +2628,19 @@ img, video, canvas { max-width: 100%; }
     </div>
 
     <div id="pay-qr-wrap" style="display:none; text-align:center; margin-bottom:1.2rem;">
-      <p style="font-size:0.85rem; margin-bottom:10px; font-weight:500;">Scan with BCEL One app to pay:</p>
+      <p data-i18n="pay.scan" style="font-size:0.85rem; margin-bottom:10px; font-weight:500;">Scan with BCEL One app to pay:</p>
       <img id="pay-qr-img" src="" alt="BCEL QR" style="max-width:200px; width:100%; border-radius:8px; border:1px solid var(--line);">
     </div>
     <div id="pay-no-qr-msg" style="display:none;">
       <div class="deposit-info" style="margin-bottom:1rem;">
-        <i class="ti ti-info-circle" style="color:var(--rose-dark);"></i> We'll send you our BCEL One QR code on Telegram.
+        <i class="ti ti-info-circle" style="color:var(--rose-dark);"></i> <span data-i18n="pay.noQr">We'll send you our BCEL One QR code on Telegram.</span>
       </div>
     </div>
 
     <div style="border-top:1px solid var(--line); padding-top:1.2rem;">
-      <p style="font-size:0.85rem; font-weight:500; margin-bottom:8px;">Upload your payment slip:</p>
+      <p data-i18n="pay.uploadSlip" style="font-size:0.85rem; font-weight:500; margin-bottom:8px;">Upload your payment slip:</p>
       <label class="upload-btn" for="slip-file" style="display:inline-flex; margin-bottom:8px;">
-        <i class="ti ti-camera"></i> Choose slip photo
+        <i class="ti ti-camera"></i> <span data-i18n="pay.chooseSlip">Choose slip photo</span>
       </label>
       <input type="file" id="slip-file" accept="image/*" style="display:none;" onchange="previewSlip(this)">
       <div id="slip-preview" style="display:none; margin-top:8px; margin-bottom:8px;">
@@ -2623,12 +2649,12 @@ img, video, canvas { max-width: 100%; }
     </div>
 
     <div style="display:flex; gap:10px; margin-top:1rem;">
-      <button class="btn-secondary" style="flex:1;" onclick="closeModal('modal-payment')">Close</button>
+      <button class="btn-secondary" style="flex:1;" data-i18n="pay.close" onclick="closeModal('modal-payment')">Close</button>
       <button class="btn-primary" style="flex:2;" id="submit-slip-btn" onclick="submitSlip()" disabled>
-        <i class="ti ti-upload"></i> Submit slip
+        <i class="ti ti-upload"></i> <span data-i18n="pay.submitSlip">Submit slip</span>
       </button>
     </div>
-    <p style="font-size:0.78rem; color:rgba(26,22,18,0.5); margin-top:10px; text-align:center;">Or send the slip to us directly on Telegram.</p>
+    <p data-i18n="pay.tgNote" style="font-size:0.78rem; color:rgba(26,22,18,0.5); margin-top:10px; text-align:center;">Or send the slip to us directly on Telegram.</p>
   </div>
 </div>
 
@@ -2857,6 +2883,119 @@ img, video, canvas { max-width: 100%; }
 <div class="toast" id="toast"><i class="ti ti-check"></i> <span id="toast-msg"></span></div>
 
 <script>
+// ============== LANGUAGE / I18N ==============
+let LANG = localStorage.getItem('vncloset_lang') || 'lo';   // default Lao
+
+const I18N = {
+  // Nav
+  'nav.shop':   { en:'Shop',        lo:'ຮ້ານຄ້າ' },
+  'nav.track':  { en:'Track Order', lo:'ຕິດຕາມການສັ່ງຊື້' },
+  'nav.admin':  { en:'Admin',       lo:'ຜູ້ດູແລ' },
+  'nav.cart':   { en:'Cart',        lo:'ກະຕ່າ' },
+  // Hero
+  'hero.tag1':  { en:'Pre-order',    lo:'ສັ່ງຈອງລ່ວງໜ້າ' },
+  'hero.tag2':  { en:'From Vietnam', lo:'ຈາກຫວຽດນາມ' },
+  'hero.tag3':  { en:'Hand-picked',  lo:'ຄັດເລືອກດ້ວຍມື' },
+  'hero.title': { en:'Saigon style, <em>delivered</em> to your door in Laos.', lo:'ສະໄຕລ໌ໄຊງ່ອນ <em>ສົ່ງ</em> ເຖິງປະຕູບ້ານທ່ານໃນລາວ.' },
+  'hero.sub':   { en:"Curated fashion from Vietnam's best markets. Pre-order today, we source it personally, and ship it to you via HAL Logistics or Anousith Express.", lo:'ແຟຊັນຄັດສັນຈາກຕະຫຼາດທີ່ດີທີ່ສຸດຂອງຫວຽດນາມ. ສັ່ງຈອງມື້ນີ້, ເຮົາໄປຫາຊື້ໃຫ້ດ້ວຍຕົນເອງ ແລະ ສົ່ງເຖິງທ່ານຜ່ານ HAL Logistics ຫຼື Anousith Express.' },
+  'hero.browse':{ en:'Browse the collection →', lo:'ເບິ່ງຄໍເລັກຊັນ →' },
+  // Collection
+  'col.soon':   { en:'Coming soon',  lo:'ກຳລັງຈະມາ' },
+  'col.title':  { en:'The <em>Collection</em>', lo:'<em>ຄໍເລັກຊັນ</em>' },
+  'col.updated':{ en:'Updated weekly', lo:'ອັບເດດທຸກອາທິດ' },
+  // Testimonials
+  'testi.title':{ en:'What our <em>customers</em> say', lo:'<em>ລູກຄ້າ</em> ຂອງເຮົາເວົ້າແນວໃດ' },
+  'testi.meta': { en:'Real reviews from Laos', lo:'ຄຳຕິຊົມຈິງຈາກລາວ' },
+  // How it works
+  'how.title':  { en:'How <em>pre-order</em> works', lo:'<em>ການສັ່ງຈອງ</em> ເຮັດວຽກແນວໃດ' },
+  'how.s1t':    { en:'Pick & pay', lo:'ເລືອກ & ຈ່າຍ' },
+  'how.s1p':    { en:'Choose your items, fill the form, and pay a 50% deposit via BCEL One QR to confirm.', lo:'ເລືອກສິນຄ້າ, ຕື່ມຂໍ້ມູນ ແລະ ຈ່າຍເງິນມັດຈຳ 50% ຜ່ານ BCEL One QR ເພື່ອຢືນຢັນ.' },
+  'how.s2t':    { en:'We source', lo:'ເຮົາໄປຫາຊື້' },
+  'how.s2p':    { en:'We personally buy your items at Vietnamese markets within 3–5 days.', lo:'ເຮົາໄປຊື້ສິນຄ້າໃຫ້ທ່ານທີ່ຕະຫຼາດຫວຽດນາມພາຍໃນ 3–5 ມື້.' },
+  'how.s3t':    { en:'Ship to Laos', lo:'ສົ່ງມາລາວ' },
+  'how.s3p':    { en:'HAL Logistics handles customs. Anousith forwards to your province. Allow 7–14 days total.', lo:'HAL Logistics ດຳເນີນພິທີການພາສີ. Anousith ສົ່ງຕໍ່ໄປແຂວງຂອງທ່ານ. ໃຊ້ເວລາລວມ 7–14 ມື້.' },
+  'how.s4t':    { en:'Delivered', lo:'ສົ່ງເຖິງ' },
+  'how.s4p':    { en:'Pick up at the nearest branch or get door-to-door delivery.', lo:'ຮັບເອົາທີ່ສາຂາໃກ້ບ້ານ ຫຼື ສົ່ງເຖິງປະຕູບ້ານ.' },
+  // Track order
+  'status.title':{ en:'Track your <em>order</em>', lo:'ຕິດຕາມ <em>ການສັ່ງຊື້</em> ຂອງທ່ານ' },
+  'status.meta': { en:'Enter your phone', lo:'ໃສ່ເບີໂທຂອງທ່ານ' },
+  'status.phone':{ en:'Phone number', lo:'ເບີໂທລະສັບ' },
+  'status.find': { en:'Find my orders', lo:'ຄົ້ນຫາການສັ່ງຊື້' },
+  // Cart
+  'cart.title':  { en:'Your <em>cart</em>', lo:'<em>ກະຕ່າ</em> ຂອງທ່ານ' },
+  'cart.review': { en:'Review before checkout', lo:'ກວດກ່ອນຊຳລະເງິນ' },
+  'cart.empty':  { en:'Your cart is empty', lo:'ກະຕ່າຂອງທ່ານຫວ່າງເປົ່າ' },
+  'cart.total':  { en:'Total', lo:'ລວມທັງໝົດ' },
+  'cart.policy': { en:'<strong>Pre-order policy:</strong> A 50% deposit confirms your order. The rest is due when your items arrive in Laos (7–14 days).', lo:'<strong>ນະໂຍບາຍສັ່ງຈອງ:</strong> ເງິນມັດຈຳ 50% ເພື່ອຢືນຢັນການສັ່ງຊື້. ສ່ວນທີ່ເຫຼືອຈ່າຍເມື່ອສິນຄ້າມາຮອດລາວ (7–14 ມື້).' },
+  'cart.continue':{ en:'Continue to checkout', lo:'ສືບຕໍ່ຊຳລະເງິນ' },
+  // Checkout
+  'co.title':    { en:'Place your <em>pre-order</em>', lo:'<em>ສັ່ງຈອງ</em> ລ່ວງໜ້າ' },
+  'co.meta':     { en:"We'll text you on Telegram/WhatsApp once your items ship.", lo:'ເຮົາຈະແຈ້ງທ່ານທາງ Telegram/WhatsApp ເມື່ອສິນຄ້າຖືກສົ່ງ.' },
+  'co.name':     { en:'Full name *', lo:'ຊື່ ແລະ ນາມສະກຸນ *' },
+  'co.phone':    { en:'Phone (WhatsApp) *', lo:'ເບີໂທ (WhatsApp) *' },
+  'co.addr':     { en:'Village, district, province *', lo:'ບ້ານ, ເມືອງ, ແຂວງ *' },
+  'co.logistics':{ en:'Logistics *', lo:'ການຂົນສົ່ງ *' },
+  'co.social':   { en:'Facebook / TikTok handle (optional)', lo:'ຊື່ Facebook / TikTok (ບໍ່ບັງຄັບ)' },
+  'co.notes':    { en:'Special notes (optional)', lo:'ໝາຍເຫດພິເສດ (ບໍ່ບັງຄັບ)' },
+  'co.place':    { en:'Place pre-order', lo:'ຢືນຢັນການສັ່ງຈອງ' },
+  // Payment
+  'pay.confirmMeta':{ en:'Please complete payment to confirm your pre-order.', lo:'ກະລຸນາຊຳລະເງິນເພື່ອຢືນຢັນການສັ່ງຈອງ.' },
+  'pay.scan':    { en:'Scan with BCEL One app to pay:', lo:'ສະແກນດ້ວຍແອັບ BCEL One ເພື່ອຈ່າຍ:' },
+  'pay.noQr':    { en:"We'll send you our BCEL One QR code on Telegram.", lo:'ເຮົາຈະສົ່ງ QR BCEL One ໃຫ້ທ່ານທາງ Telegram.' },
+  'pay.uploadSlip':{ en:'Upload your payment slip:', lo:'ອັບໂຫຼດໃບບິນການຊຳລະຂອງທ່ານ:' },
+  'pay.chooseSlip':{ en:'Choose slip photo', lo:'ເລືອກຮູບໃບບິນ' },
+  'pay.close':   { en:'Close', lo:'ປິດ' },
+  'pay.submitSlip':{ en:'Submit slip', lo:'ສົ່ງໃບບິນ' },
+  'pay.tgNote':  { en:'Or send the slip to us directly on Telegram.', lo:'ຫຼື ສົ່ງໃບບິນຫາເຮົາໂດຍກົງທາງ Telegram.' },
+  // Product card / modal (dynamic)
+  'product.addToCart':{ en:'Add to cart', lo:'ເພີ່ມໃສ່ກະຕ່າ' },
+  'product.size':     { en:'Size', lo:'ຂະໜາດ' },
+  'product.color':    { en:'Color', lo:'ສີ' },
+  'product.qty':      { en:'Quantity', lo:'ຈຳນວນ' },
+  'product.preorder': { en:'Pre-order', lo:'ສັ່ງຈອງ' },
+  'product.all':      { en:'All', lo:'ທັງໝົດ' },
+  'cart.added':       { en:'Added to cart', lo:'ເພີ່ມໃສ່ກະຕ່າແລ້ວ' },
+};
+
+function t(key, fallback) {
+  const e = I18N[key];
+  if (!e) return fallback !== undefined ? fallback : key;
+  return e[LANG] !== undefined ? e[LANG] : (e.en || key);
+}
+
+function applyI18n(root) {
+  const r = root || document;
+  r.querySelectorAll('[data-i18n]').forEach(el => {
+    const v = t(el.getAttribute('data-i18n'), el.textContent);
+    if (v != null) el.textContent = v;
+  });
+  r.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const v = t(el.getAttribute('data-i18n-html'));
+    if (v != null) el.innerHTML = v;
+  });
+  r.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    const v = t(el.getAttribute('data-i18n-ph'), el.placeholder);
+    if (v != null) el.placeholder = v;
+  });
+}
+
+function reRenderDynamic() {
+  const safe = fn => { try { if (typeof window[fn] === 'function') window[fn](); } catch(e){} };
+  safe('renderProducts'); safe('promoInit'); safe('renderCatFilter');
+  safe('renderTestimonialsSection'); safe('renderCollectionTeaser');
+  if (document.getElementById('modal-cart') && document.getElementById('modal-cart').classList.contains('show')) safe('openCart');
+}
+
+function setLang(l) {
+  LANG = l;
+  localStorage.setItem('vncloset_lang', l);
+  document.documentElement.lang = l;
+  applyI18n();
+  reRenderDynamic();
+}
+function toggleLang() { setLang(LANG === 'lo' ? 'en' : 'lo'); }
+function initLang() { document.documentElement.lang = LANG; applyI18n(); }
+
 // ============== SECURITY FUNCTIONS ==============
 // Sanitize HTML to prevent XSS attacks
 function sanitizeHTML(text) {
@@ -3332,7 +3471,7 @@ function renderCatFilter() {
   const cats = ['All', ...new Set(db.products.map(p => p.cat).filter(Boolean))];
   bar.innerHTML = cats.map(c => {
     const count = c === 'All' ? db.products.length : db.products.filter(p => p.cat === c).length;
-    const safeC = sanitizeHTML(c);
+    const safeC = c === 'All' ? t('product.all') : sanitizeHTML(c);
     return `<div class="cat-pill ${_activeCat === c ? 'active' : ''}" onclick="setCat('${c}')">${safeC}<span class="cat-count">${count}</span></div>`;
   }).join('');
 }
@@ -3493,23 +3632,23 @@ function openProduct(id) {
   document.getElementById('product-modal-content').innerHTML = `
     ${carouselHtml}
     <h3 class="serif">${p.name}</h3>
-    <p class="modal-meta">${p.cat} · Pre-order from Vietnam</p>
+    <p class="modal-meta">${p.cat} · ${t('product.preorder')}</p>
     <div style="margin-bottom:1.5rem;">${priceHtml}</div>
 
-    <div class="field"><label>Size</label>
+    <div class="field"><label>${t('product.size')}</label>
       <div class="size-pills" id="size-pills">
         ${p.sizes.map((s,j)=>`<div class="pill ${j===0?'active':''}" onclick="pickPill(this,'size-pills')">${s}</div>`).join('')}
       </div>
     </div>
-    <div class="field"><label>Color</label>
+    <div class="field"><label>${t('product.color')}</label>
       <div class="color-pills" id="color-pills">
         ${p.colors.map((c,j)=>`<div class="pill ${j===0?'active':''}" onclick="pickPill(this,'color-pills')">${c}</div>`).join('')}
       </div>
     </div>
     <div class="field-row">
-      <div class="field"><label>Quantity</label><input type="number" id="prod-qty" value="1" min="1" max="10"></div>
+      <div class="field"><label>${t('product.qty')}</label><input type="number" id="prod-qty" value="1" min="1" max="10"></div>
       <div class="field" style="display: flex; align-items: flex-end;">
-        <button class="btn-primary" onclick="addToCart('${p.id}')"><i class="ti ti-shopping-bag"></i> Add to cart</button>
+        <button class="btn-primary" onclick="addToCart('${p.id}')"><i class="ti ti-shopping-bag"></i> ${t('product.addToCart')}</button>
       </div>
     </div>
     <p style="font-size: 0.8rem; color: rgba(26,22,18,0.5); margin-top: 1rem;">7–14 day delivery to Laos · No-questions return if wrong size</p>
@@ -3552,7 +3691,7 @@ function addToCart(prodId) {
   saveDB();
   updateCartCount();
   closeModal('modal-product');
-  toast(fsActive ? `Added at ${fs.discountPct}% off!` : 'Added to cart');
+  toast(fsActive ? `Added at ${fs.discountPct}% off!` : t('cart.added'));
 }
 
 function updateCartCount() {
@@ -3577,7 +3716,7 @@ function openCart() {
         <div class="cart-thumb">${thumb}</div>
         <div class="cart-info">
           <h4>${c.name}</h4>
-          <p>${c.size} · ${c.color} · Qty ${c.qty}</p>
+          <p>${c.size} · ${c.color} · ${t('product.qty')} ${c.qty}</p>
           <p class="cart-price">${c.originalPrice ? `<span style="text-decoration:line-through;color:rgba(26,22,18,0.38);font-size:0.82rem;margin-right:4px;">${fmtLAK(c.originalPrice*c.qty)}</span><span style="color:#dc2626;">${fmtLAK(c.price*c.qty)}</span><span style="background:#dc2626;color:white;font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:99px;margin-left:5px;">-${c.promoPct}%</span>` : fmtLAK(c.price*c.qty)}</p>
         </div>
         <button class="cart-remove" onclick="removeCart(${idx})"><i class="ti ti-trash"></i></button>
@@ -5740,6 +5879,7 @@ function fbPushAll() {
 }
 
 // ============== INIT ==============
+initLang();
 renderProducts();
 updateCartCount();
 promoInit();

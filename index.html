@@ -3161,6 +3161,7 @@ async function checkAdminPassword() {
     document.getElementById('nav-admin').style.display = '';
     toast('✅ Admin access granted!');
     goto('admin');
+    if (_fbDb) fbLoadOrders();  // pull customer orders now that admin is unlocked
 
     // Auto-logout after session timeout
     setTimeout(() => {
@@ -3633,6 +3634,7 @@ function submitOrder() {
   db.cart = [];
   saveDB();
   fbSaveOrder(order);
+  sheetSaveOrder(order);
   updateCartCount();
   closeModal('modal-checkout');
   openPaymentModal(orderId);
@@ -3998,7 +4000,7 @@ function renderOrders() {
 
 function updateStatus(id, status) {
   const o = db.orders.find(x=>x.id===id);
-  if (o) { o.status = status; saveDB(); toast('Updated ' + id + ' → ' + status); }
+  if (o) { o.status = status; saveDB(); sheetUpdateStatus(id, status); toast('Updated ' + id + ' → ' + status); }
 }
 
 function updatePaymentStatus(id, status) {
@@ -5478,6 +5480,19 @@ let _fbDb  = null;
 let _fbSaveTimer = null;
 const FB_ROOT = 'vncloset';
 
+// Baked-in config so the PUBLISHED site auto-connects for every visitor
+// (so customers see the real catalog and their orders reach the admin).
+// Firebase web config is safe to expose publicly.
+const BAKED_FB_CONFIG = JSON.stringify({
+  apiKey: "AIzaSyBiD6Gy3ke1Gc1t1ueCMR7-OajvjMPy6Wg",
+  authDomain: "vn-closet.firebaseapp.com",
+  databaseURL: "https://vn-closet-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "vn-closet",
+  storageBucket: "vn-closet.firebasestorage.app",
+  messagingSenderId: "37322606314",
+  appId: "1:37322606314:web:34b32d7551592d8135f993"
+});
+
 function connectFirebase() {
   const raw = document.getElementById('firebase-config').value.trim();
   if (!raw) { toast('Please paste your Firebase config JSON'); return; }
@@ -5491,7 +5506,7 @@ function connectFirebase() {
 }
 
 function initFirebase() {
-  const cfgStr = db.settings && db.settings.firebaseConfig;
+  const cfgStr = (db.settings && db.settings.firebaseConfig) || BAKED_FB_CONFIG;
   if (!cfgStr || !window.firebase) return;
   if (_fbDb) { fbUpdateStatusUI(); return; }
   try {
@@ -5542,28 +5557,16 @@ async function fbLoadAll() {
       if (cat.plCosts)    db.plCosts    = cat.plCosts;
       if (cat.settings)   db.settings   = { ...db.settings, ...cat.settings, firebaseConfig: db.settings.firebaseConfig };
     }
-    // Load orders
-    const ordSnap = await _fbDb.ref(FB_ROOT + '/orders').once('value');
-    const ords = ordSnap.val();
-    if (ords) db.orders = Object.values(ords).sort((a,b) => (b.id||'').localeCompare(a.id||''));
-
     // Cache locally
     const lean = { ...db, products: db.products.map(p => ({...p, imgs:(p.imgs||[]).filter(s=>!s.startsWith('data:'))})) };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(lean));
     renderProducts(); promoInit(); populateImgsFromDB().then(()=>renderProducts());
     fbSetStatus('connected', 'Connected');
-    document.getElementById('fb-last-sync').textContent = 'Last sync: ' + new Date().toLocaleTimeString();
+    const sync = document.getElementById('fb-last-sync');
+    if (sync) sync.textContent = 'Last sync: ' + new Date().toLocaleTimeString();
 
-    // Real-time listener — new customer orders appear instantly in admin
-    _fbDb.ref(FB_ROOT + '/orders').on('value', snap => {
-      const ords = snap.val();
-      if (!ords) return;
-      db.orders = Object.values(ords).sort((a,b) => (b.id||'').localeCompare(a.id||''));
-      const lean2 = { ...db, products: db.products.map(p => ({...p, imgs:(p.imgs||[]).filter(s=>!s.startsWith('data:'))})) };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(lean2));
-      if (document.getElementById('pane-dash') && document.getElementById('pane-dash').classList.contains('active')) renderDash();
-      document.getElementById('fb-last-sync').textContent = 'Last sync: ' + new Date().toLocaleTimeString();
-    });
+    // Orders contain customer names/phones/addresses — only the admin loads them.
+    if (_adminUnlocked) fbLoadOrders();
   } catch(e) {
     console.warn('Firebase load:', e.message);
     fbSetStatus('error', 'Load failed — check rules');
@@ -5571,8 +5574,36 @@ async function fbLoadAll() {
   }
 }
 
+// Admin-only: load all orders and listen for new ones in real time.
+let _fbOrdersListening = false;
+async function fbLoadOrders() {
+  if (!_fbDb || _fbOrdersListening) return;
+  _fbOrdersListening = true;
+  try {
+    const ordSnap = await _fbDb.ref(FB_ROOT + '/orders').once('value');
+    const ords = ordSnap.val();
+    if (ords) db.orders = Object.values(ords).sort((a,b) => (b.id||'').localeCompare(a.id||''));
+    const lean = { ...db, products: db.products.map(p => ({...p, imgs:(p.imgs||[]).filter(s=>!s.startsWith('data:'))})) };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(lean));
+
+    // Real-time listener — new customer orders appear instantly in admin
+    _fbDb.ref(FB_ROOT + '/orders').on('value', snap => {
+      const o = snap.val();
+      if (!o) return;
+      db.orders = Object.values(o).sort((a,b) => (b.id||'').localeCompare(a.id||''));
+      const lean2 = { ...db, products: db.products.map(p => ({...p, imgs:(p.imgs||[]).filter(s=>!s.startsWith('data:'))})) };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(lean2));
+      if (document.getElementById('pane-dash') && document.getElementById('pane-dash').classList.contains('active')) renderDash();
+      const sync = document.getElementById('fb-last-sync');
+      if (sync) sync.textContent = 'Last sync: ' + new Date().toLocaleTimeString();
+    });
+  } catch(e) {
+    console.warn('Firebase orders load:', e.message);
+  }
+}
+
 function fbSaveCatalog() {
-  if (!_fbDb) return;
+  if (!_fbDb || !_adminUnlocked) return;  // only the admin may write the catalog
   clearTimeout(_fbSaveTimer);
   _fbSaveTimer = setTimeout(() => {
     const cat = {
@@ -5593,6 +5624,39 @@ function fbSaveOrder(order) {
   if (!_fbDb) return;
   _fbDb.ref(FB_ROOT + '/orders/' + order.id).set(order)
     .catch(e => console.warn('Firebase order save:', e.message));
+}
+
+// ============== GOOGLE SHEETS WEBHOOK ==============
+// Sends orders to your Google Sheet + Telegram via the Apps Script web app.
+// Uses no-cors + text/plain so the browser doesn't block it with a CORS preflight.
+function sheetSaveOrder(order) {
+  const url = (db.settings && db.settings.sheetUrl || '').trim();
+  if (!url) return;
+  const payload = {
+    type: 'new_order',
+    order: {
+      id: order.id, date: order.date, name: order.name, phone: order.phone,
+      addr: order.addr, logistics: order.logistics, notes: order.notes || '',
+      items: order.items, total: order.total, status: order.status || 'pending'
+    }
+  };
+  fetch(url, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  }).catch(e => console.warn('Sheet order save:', e.message));
+}
+
+function sheetUpdateStatus(orderId, status) {
+  const url = (db.settings && db.settings.sheetUrl || '').trim();
+  if (!url) return;
+  fetch(url, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ type: 'update_status', orderId, status })
+  }).catch(e => console.warn('Sheet status update:', e.message));
 }
 
 function fbPushAll() {

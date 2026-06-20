@@ -4749,8 +4749,15 @@ function renderSettings() {
 function uploadBcelQR(input) {
   if (!input.files || !input.files[0]) return;
   const reader = new FileReader();
-  reader.onload = e => {
-    db.settings.bcelQR = e.target.result;
+  reader.onload = async e => {
+    if (CLOUDINARY_CLOUD) toast('Uploading QR…');
+    // Host the QR online so it shows to every customer (not just this device)
+    let stored = e.target.result;
+    try {
+      const url = await uploadToCloudinary(e.target.result);
+      if (url) stored = url;
+    } catch(err) { console.warn('QR upload failed; keeping local copy', err.message); }
+    db.settings.bcelQR = stored;
     saveDB();
     renderSettings();
     toast('BCEL QR saved!');
@@ -5670,7 +5677,7 @@ function fbSaveCatalog() {
       defaults:   db.defaults   || {},
       suppliers:  db.suppliers  || [],
       plCosts:    db.plCosts    || {},
-      settings:   { sheetUrl: db.settings.sheetUrl||'', tgToken: db.settings.tgToken||'', tgChat: db.settings.tgChat||'' },
+      settings:   { sheetUrl: db.settings.sheetUrl||'', tgToken: db.settings.tgToken||'', tgChat: db.settings.tgChat||'', bcelQR: db.settings.bcelQR||'' },
     };
     _fbDb.ref(FB_ROOT + '/catalog').set(cat)
       .then(() => { document.getElementById('fb-last-sync').textContent = 'Last sync: ' + new Date().toLocaleTimeString(); })

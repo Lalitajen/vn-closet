@@ -3568,7 +3568,7 @@ function openCart() {
   } else {
     empty.style.display = 'none'; checkout.style.display = 'block';
     items.innerHTML = db.cart.map((c,idx)=>{
-      const prod = db.products.find(p=>p.name===c.name);
+      const prod = db.products.find(p=>p.id===c.prodId) || db.products.find(p=>p.name===c.name);
       const imgs = prod ? getImgs(prod) : [];
       const thumb = imgs.length
         ? `<img src="${imgs[0]}" alt="${c.name}" onerror="this.style.display='none'">`
@@ -5607,28 +5607,36 @@ function fbUpdateStatusUI() {
   }
 }
 
+// Apply a catalog snapshot from Firebase into the local db + re-render.
+function applyCatalog(cat) {
+  if (!cat) return;
+  if (cat.products)   db.products   = cat.products.map(p => ({...p, imgs: p.imgs||[]}));
+  if (cat.promotions) db.promotions = cat.promotions;
+  if (cat.defaults)   db.defaults   = cat.defaults;
+  if (cat.suppliers)  db.suppliers  = cat.suppliers;
+  if (cat.plCosts)    db.plCosts    = cat.plCosts;
+  if (cat.settings)   db.settings   = { ...db.settings, ...cat.settings, firebaseConfig: db.settings.firebaseConfig };
+  // Cache locally
+  const lean = { ...db, products: db.products.map(p => ({...p, imgs:(p.imgs||[]).filter(s=>!s.startsWith('data:'))})) };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(lean));
+  renderProducts(); promoInit(); populateImgsFromDB().then(()=>renderProducts());
+  if (typeof renderCollectionTeaser === 'function') renderCollectionTeaser();
+  if (_adminUnlocked && typeof renderAdminProducts === 'function') renderAdminProducts();
+  const sync = document.getElementById('fb-last-sync');
+  if (sync) sync.textContent = 'Last sync: ' + new Date().toLocaleTimeString();
+}
+
+let _fbCatalogListening = false;
 async function fbLoadAll() {
   if (!_fbDb) return;
   fbSetStatus('', 'Loading…');
   try {
-    // Load catalog (products, settings, promotions — set by admin)
-    const catSnap = await _fbDb.ref(FB_ROOT + '/catalog').once('value');
-    const cat = catSnap.val();
-    if (cat) {
-      if (cat.products)   db.products   = cat.products.map(p => ({...p, imgs: p.imgs||[]}));
-      if (cat.promotions) db.promotions = cat.promotions;
-      if (cat.defaults)   db.defaults   = cat.defaults;
-      if (cat.suppliers)  db.suppliers  = cat.suppliers;
-      if (cat.plCosts)    db.plCosts    = cat.plCosts;
-      if (cat.settings)   db.settings   = { ...db.settings, ...cat.settings, firebaseConfig: db.settings.firebaseConfig };
+    // Live catalog listener — admin edits show up on customers' screens instantly.
+    if (!_fbCatalogListening) {
+      _fbCatalogListening = true;
+      _fbDb.ref(FB_ROOT + '/catalog').on('value', snap => applyCatalog(snap.val()));
     }
-    // Cache locally
-    const lean = { ...db, products: db.products.map(p => ({...p, imgs:(p.imgs||[]).filter(s=>!s.startsWith('data:'))})) };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(lean));
-    renderProducts(); promoInit(); populateImgsFromDB().then(()=>renderProducts());
     fbSetStatus('connected', 'Connected');
-    const sync = document.getElementById('fb-last-sync');
-    if (sync) sync.textContent = 'Last sync: ' + new Date().toLocaleTimeString();
 
     // Orders contain customer names/phones/addresses — only the admin loads them.
     if (_adminUnlocked) fbLoadOrders();

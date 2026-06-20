@@ -5696,6 +5696,11 @@ function toast(msg) {
 let _fbApp = null;
 let _fbDb  = null;
 let _fbSaveTimer = null;
+// True between an admin edit and the moment that edit is confirmed written to
+// the cloud. While dirty, incoming catalog snapshots must NOT overwrite the
+// admin's local changes (otherwise the debounced write races the live listener
+// and the edit silently reverts in the shop grid).
+let _catalogDirty = false;
 const FB_ROOT = 'vncloset';
 
 // Baked-in config so the PUBLISHED site auto-connects for every visitor
@@ -5763,6 +5768,9 @@ function fbUpdateStatusUI() {
 // Apply a catalog snapshot from Firebase into the local db + re-render.
 function applyCatalog(cat) {
   if (!cat) return;
+  // Don't clobber the admin's just-made edits that haven't been written to the
+  // cloud yet — their local copy is authoritative until their own write lands.
+  if (_adminUnlocked && _catalogDirty) return;
   if (cat.products)   db.products   = cat.products.map(p => ({...p, imgs: p.imgs||[]}));
   if (cat.promotions) db.promotions = cat.promotions;
   if (cat.defaults)   db.defaults   = cat.defaults;
@@ -5830,6 +5838,7 @@ async function fbLoadOrders() {
 
 function fbSaveCatalog() {
   if (!_fbDb || !_adminUnlocked) return;  // only the admin may write the catalog
+  _catalogDirty = true;                   // guard local edits until this write lands
   clearTimeout(_fbSaveTimer);
   _fbSaveTimer = setTimeout(() => {
     const cat = {
@@ -5841,7 +5850,7 @@ function fbSaveCatalog() {
       settings:   { sheetUrl: db.settings.sheetUrl||'', tgToken: db.settings.tgToken||'', tgChat: db.settings.tgChat||'', bcelQR: db.settings.bcelQR||'' },
     };
     _fbDb.ref(FB_ROOT + '/catalog').set(cat)
-      .then(() => { document.getElementById('fb-last-sync').textContent = 'Last sync: ' + new Date().toLocaleTimeString(); })
+      .then(() => { _catalogDirty = false; document.getElementById('fb-last-sync').textContent = 'Last sync: ' + new Date().toLocaleTimeString(); })
       .catch(e => { console.warn('Firebase catalog save:', e.message); fbSetStatus('error', 'Save failed — check rules'); });
   }, 1200);
 }

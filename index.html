@@ -2180,6 +2180,7 @@ img, video, canvas { max-width: 100%; }
           <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
             <button class="btn-primary" onclick="connectFirebase()"><i class="ti ti-cloud-upload"></i> Connect Firebase</button>
             <button class="btn-secondary" onclick="fbPushAll()" id="fb-push-btn" style="display:none;"><i class="ti ti-refresh"></i> Push all data now</button>
+            <button class="btn-secondary" onclick="migrateImagesToCloudinary()"><i class="ti ti-photo-up"></i> Fix existing photos</button>
             <span id="fb-last-sync" style="font-size:0.75rem; color:rgba(26,22,18,0.4);"></span>
           </div>
         </div>
@@ -4111,24 +4112,81 @@ function addPendingUrl() {
   renderAddPhotoGrid();
 }
 
+// ---- Cloudinary: host uploaded photos online so they show on every device ----
+const CLOUDINARY_CLOUD  = 'ds9ipqm0a';
+const CLOUDINARY_PRESET = 'ml_default';
+
+function dataUrlToBlob(dataUrl) {
+  const [head, b64] = dataUrl.split(',');
+  const mime = (head.match(/:(.*?);/) || [,'image/jpeg'])[1];
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+
+// Uploads a base64/data-url image to Cloudinary, returns a public https URL.
+async function uploadToCloudinary(dataUrl) {
+  if (!CLOUDINARY_CLOUD || !CLOUDINARY_PRESET) return null;
+  const form = new FormData();
+  form.append('file', dataUrlToBlob(dataUrl));
+  form.append('upload_preset', CLOUDINARY_PRESET);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, { method: 'POST', body: form });
+  if (!res.ok) throw new Error('Cloudinary HTTP ' + res.status);
+  const data = await res.json();
+  if (!data.secure_url) throw new Error(data.error && data.error.message || 'no url');
+  return data.secure_url;
+}
+
+// One-click: upload any existing base64 product photos to Cloudinary so they
+// show on other devices. Replaces the base64 with the online URL in place.
+async function migrateImagesToCloudinary() {
+  if (!_adminUnlocked) { toast('Admin only'); return; }
+  let toFix = 0;
+  db.products.forEach(p => (p.imgs||[]).forEach(s => { if (s && s.startsWith('data:')) toFix++; }));
+  if (!toFix) { toast('✅ All photos are already online — nothing to fix'); return; }
+  toast(`Uploading ${toFix} photo(s) to Cloudinary…`);
+  let fixed = 0, failed = 0;
+  for (const p of db.products) {
+    if (!p.imgs) continue;
+    for (let i = 0; i < p.imgs.length; i++) {
+      if (p.imgs[i] && p.imgs[i].startsWith('data:')) {
+        try { p.imgs[i] = await uploadToCloudinary(p.imgs[i]); fixed++; }
+        catch(e) { console.warn('migrate img:', e.message); failed++; }
+      }
+    }
+  }
+  saveDB(); renderProducts(); renderAdminProducts();
+  toast(`✅ Fixed ${fixed} photo(s)` + (failed ? `, ${failed} failed` : '') + ' — now visible on all devices');
+}
+
 async function readFilesIntoArray(files, targetArr, onDone, product = null) {
   const remaining = Array.from(files);
   let done = 0;
   if (!remaining.length) { onDone(); return; }
+  if (CLOUDINARY_CLOUD) toast(`Uploading ${remaining.length} photo(s)…`);
 
   remaining.forEach(file => {
     const reader = new FileReader();
     reader.onload = async e => {
       const compressed = await compressImage(e.target.result);
-      targetArr.push(compressed);
 
-      // Generate thumbnail and blur placeholder for product grid
+      // Make the small blur placeholder locally before any pushes
+      let blur = null;
+      if (product) blur = await generateBlurPlaceholder(compressed);
+
+      // Upload to Cloudinary so the photo shows on every device; fall back to
+      // the local base64 copy if the upload fails (e.g. no internet).
+      let stored = compressed;
+      try {
+        const url = await uploadToCloudinary(compressed);
+        if (url) stored = url;
+      } catch(err) { console.warn('Cloudinary upload failed; keeping local copy', err.message); }
+
+      // Push together so imgs and blur stay index-aligned across multiple files
+      targetArr.push(stored);
       if (product) {
-        if (!product.thumbs) product.thumbs = [];
         if (!product.blur) product.blur = [];
-        const thumb = await generateThumbnail(compressed);
-        const blur = await generateBlurPlaceholder(compressed);
-        product.thumbs.push(thumb);
         product.blur.push(blur);
       }
 
@@ -5607,7 +5665,7 @@ function fbSaveCatalog() {
   clearTimeout(_fbSaveTimer);
   _fbSaveTimer = setTimeout(() => {
     const cat = {
-      products:   db.products.map(p => ({...p, imgs:(p.imgs||[]).filter(s=>!s.startsWith('data:'))})),
+      products:   db.products.map(p => { const q = {...p, imgs:(p.imgs||[]).filter(s=>!s.startsWith('data:'))}; delete q.thumbs; return q; }),
       promotions: db.promotions || {},
       defaults:   db.defaults   || {},
       suppliers:  db.suppliers  || [],

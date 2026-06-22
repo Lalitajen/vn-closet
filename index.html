@@ -267,6 +267,16 @@ html[lang="lo"] .hero h1 em {
   transition: transform 0.3s;
 }
 .product:hover { transform: translateY(-4px); }
+.product-share-btn {
+  position: absolute; top: 8px; right: 8px; z-index: 3;
+  width: 34px; height: 34px; border-radius: 50%;
+  border: none; cursor: pointer;
+  background: rgba(255,255,255,0.92); color: var(--ink);
+  box-shadow: 0 2px 8px rgba(26,22,18,0.18);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+.product-share-btn:hover { background: var(--rose-dark); color: #fff; transform: scale(1.08); }
 .product-img {
   aspect-ratio: 3/4;
   background: var(--cream);
@@ -1730,6 +1740,7 @@ img, video, canvas { max-width: 100%; }
 
       <h4>Growth</h4>
       <a id="adm-nav-promo" onclick="adminGoto('promo')"><i class="ti ti-speakerphone"></i> Promotions</a>
+      <a id="adm-nav-affiliates" onclick="adminGoto('affiliates')"><i class="ti ti-users-group"></i> Affiliates</a>
       <a id="adm-nav-salesai" onclick="adminGoto('salesai')"><i class="ti ti-sparkles"></i> Sales & Marketing</a>
       <a id="adm-nav-pl" onclick="adminGoto('pl')"><i class="ti ti-chart-bar"></i> P&L Tracker</a>
 
@@ -2469,6 +2480,67 @@ img, video, canvas { max-width: 100%; }
         </div>
       </div>
 
+      <!-- ============== AFFILIATES PANE ============== -->
+      <div class="admin-pane" id="pane-affiliates">
+        <h1 class="admin-h1">Affiliates</h1>
+        <p class="admin-sub">Customers who share your products and earn commission on sales</p>
+
+        <div style="background:white; border:1px solid var(--line); border-radius:8px; padding:1.5rem; max-width:720px; margin-bottom:1.5rem;">
+          <h3 style="font-family:'Playfair Display',serif; font-size:1.3rem; margin-bottom:0.75rem;">Program settings</h3>
+          <div class="field-row">
+            <div class="field">
+              <label>Enable affiliate program</label>
+              <select id="aff-set-enabled" onchange="saveAffiliateSettings()">
+                <option value="yes">On — customers can share &amp; earn</option>
+                <option value="no">Off — hide share/earn</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Commission rate (% of sale)</label>
+              <input type="number" id="aff-set-rate" min="0" max="100" step="1" onchange="saveAffiliateSettings()">
+            </div>
+          </div>
+          <div class="field">
+            <label>Commission based on</label>
+            <select id="aff-set-basis" onchange="saveAffiliateSettings()">
+              <option value="full">Full product price</option>
+              <option value="deposit">50% deposit only</option>
+            </select>
+          </div>
+          <p style="font-size:0.8rem;color:rgba(26,22,18,0.5);margin-top:4px;">Changing the rate updates all commission totals and the profit check below automatically.</p>
+          <div id="aff-profit-impact" style="margin-top:14px;"></div>
+        </div>
+
+        <h3 style="font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:0.5rem;">Will I still profit? <span style="font-size:0.8rem;font-weight:400;color:rgba(26,22,18,0.5);">— every product after paying commission</span></h3>
+        <div class="table-wrap" style="margin-bottom:1.5rem;">
+          <table>
+            <thead><tr><th>Product</th><th>Price</th><th>Your cost</th><th>Profit now</th><th id="aff-pt-commhead">Commission</th><th>Profit after commission</th></tr></thead>
+            <tbody id="aff-profit-table"></tbody>
+          </table>
+        </div>
+
+        <h3 style="font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:0.5rem;">Who to pay</h3>
+        <div class="stats" id="aff-stats" style="margin-bottom:1rem;"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:0.75rem;">
+          <input id="aff-search" placeholder="Search name, phone or code…" oninput="renderAffiliates()" style="flex:1;min-width:200px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.9rem;">
+          <select id="aff-filter" onchange="renderAffiliates()" style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.9rem;background:white;">
+            <option value="all">All</option>
+            <option value="unpaid">To pay (unpaid, has sales)</option>
+            <option value="sales">With sales</option>
+            <option value="dupe">⚠️ Possible duplicates</option>
+            <option value="self">⚠️ Self-referrals</option>
+          </select>
+          <button class="btn-secondary" onclick="exportAffiliatesCSV()"><i class="ti ti-download"></i> Export CSV</button>
+        </div>
+        <p id="aff-count" style="font-size:0.8rem;color:rgba(26,22,18,0.5);margin-bottom:0.5rem;"></p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Person</th><th>Phone</th><th>Code(s)</th><th>Orders</th><th>Sales referred</th><th>Commission to pay</th><th></th></tr></thead>
+            <tbody id="aff-table"></tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- ============== P&L TRACKER PANE ============== -->
       <div class="admin-pane" id="pane-pl">
         <h1 class="admin-h1">Profit &amp; Loss Tracker</h1>
@@ -2572,6 +2644,51 @@ img, video, canvas { max-width: 100%; }
   <div class="modal">
     <button class="modal-close" onclick="closeModal('modal-product')"><i class="ti ti-x"></i></button>
     <div id="product-modal-content"></div>
+  </div>
+</div>
+
+<!-- ============== SHARE / AFFILIATE MODAL ============== -->
+<div class="modal-bg" id="modal-share">
+  <div class="modal" style="max-width:480px;">
+    <button class="modal-close" onclick="closeModal('modal-share')"><i class="ti ti-x"></i></button>
+    <h3 class="serif" data-i18n-html="aff.title">Share &amp; <em style="color:var(--rose-dark)">earn</em></h3>
+    <p class="modal-meta" id="share-sub" style="margin-bottom:1rem;">Share this product and earn commission on every sale.</p>
+
+    <!-- Step 1: become an affiliate -->
+    <div id="share-signup" style="display:none;">
+      <div class="field"><label data-i18n="aff.name">Your name *</label><input id="aff-name"></div>
+      <div class="field"><label data-i18n="aff.phone">Your phone (WhatsApp) *</label><input id="aff-phone" placeholder="020XXXXXXXX"></div>
+      <button class="btn-primary" style="width:100%;margin-top:6px;" onclick="affiliateSignup()"><i class="ti ti-user-plus"></i> <span data-i18n="aff.getLink">Get my share link</span></button>
+      <p style="font-size:0.76rem;color:rgba(26,22,18,0.5);margin-top:10px;text-align:center;" data-i18n="aff.noSpam">We'll text your commission to this number. No spam.</p>
+    </div>
+
+    <!-- Step 2: share -->
+    <div id="share-body" style="display:none;">
+      <div id="share-earn-note" style="background:rgba(160,95,73,0.1);border-radius:10px;padding:10px 12px;font-size:0.82rem;margin-bottom:12px;"></div>
+      <div id="share-img-wrap" style="text-align:center;margin-bottom:10px;"></div>
+      <label style="font-weight:600;font-size:0.85rem;" data-i18n="aff.caption">Your post caption</label>
+      <textarea id="share-caption" rows="9" style="width:100%;margin-top:6px;font-family:inherit;font-size:0.9rem;line-height:1.5;padding:10px;border:1px solid var(--line);border-radius:10px;resize:vertical;"></textarea>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+        <button class="btn-primary" style="flex:1;min-width:130px;" onclick="doNativeShare()"><i class="ti ti-share"></i> <span data-i18n="aff.shareNow">Share now</span></button>
+        <button class="btn-secondary" onclick="copyCaption()"><i class="ti ti-copy"></i> <span data-i18n="aff.copy">Copy</span></button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+        <button class="btn-secondary" style="flex:1;min-width:130px;" onclick="openFacebookShare()"><i class="ti ti-brand-facebook"></i> Facebook</button>
+        <button class="btn-secondary" id="ai-improve-btn" style="flex:1;min-width:130px;display:none;" onclick="aiImproveCaption()"><i class="ti ti-sparkles"></i> <span data-i18n="aff.aiImprove">Improve with AI</span></button>
+      </div>
+      <div id="share-earn-actions" style="margin-top:12px;display:none;text-align:center;">
+        <a onclick="showMyEarnings()" style="font-size:0.82rem;color:var(--rose-dark);cursor:pointer;text-decoration:underline;"><i class="ti ti-wallet"></i> <span data-i18n="aff.viewEarnings">View my earnings</span></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============== MY EARNINGS MODAL ============== -->
+<div class="modal-bg" id="modal-earnings">
+  <div class="modal" style="max-width:400px;">
+    <button class="modal-close" onclick="closeModal('modal-earnings')"><i class="ti ti-x"></i></button>
+    <h3 class="serif" data-i18n-html="aff.myEarnings">My <em style="color:var(--rose-dark)">earnings</em></h3>
+    <div id="earnings-body" style="margin-top:1rem;"></div>
   </div>
 </div>
 
@@ -2969,12 +3086,45 @@ const I18N = {
   'product.preorder': { en:'Pre-order', lo:'ສັ່ງຈອງ' },
   'product.all':      { en:'All', lo:'ທັງໝົດ' },
   'cart.added':       { en:'Added to cart', lo:'ເພີ່ມໃສ່ກະຕ່າແລ້ວ' },
+  // Affiliate / share-to-earn (customer-facing)
+  'aff.title':       { en:'Share &amp; <em style="color:var(--rose-dark)">earn</em>', lo:'ແບ່ງປັນ ແລະ <em style="color:var(--rose-dark)">ຮັບລາຍໄດ້</em>' },
+  'aff.subEarn':     { en:'Share this product and earn {rate}% commission on every sale through your link.', lo:'ແບ່ງປັນສິນຄ້ານີ້ ແລະ ຮັບຄ່າຄອມມິຊັ່ນ {rate}% ຈາກທຸກການຂາຍຜ່ານລິ້ງຂອງທ່ານ.' },
+  'aff.subAdmin':    { en:'Share this product to your Facebook page or groups.', lo:'ແບ່ງປັນສິນຄ້ານີ້ໄປຫາເພຈ ຫຼື ກຸ່ມ Facebook ຂອງທ່ານ.' },
+  'aff.name':        { en:'Your name *', lo:'ຊື່ຂອງທ່ານ *' },
+  'aff.phone':       { en:'Your phone (WhatsApp) *', lo:'ເບີໂທຂອງທ່ານ (WhatsApp) *' },
+  'aff.getLink':     { en:'Get my share link', lo:'ຮັບລິ້ງແບ່ງປັນຂອງຂ້ອຍ' },
+  'aff.noSpam':      { en:"We'll text your commission to this number. No spam.", lo:'ເຮົາຈະແຈ້ງຄ່າຄອມມິຊັ່ນຂອງທ່ານທາງເບີນີ້. ບໍ່ມີຂໍ້ຄວາມລົບກວນ.' },
+  'aff.earnNote':    { en:'💸 You earn <strong>{rate}%</strong> on every sale through your link.<br>Your code: <strong>{code}</strong>', lo:'💸 ທ່ານໄດ້ຮັບ <strong>{rate}%</strong> ຈາກທຸກການຂາຍຜ່ານລິ້ງຂອງທ່ານ.<br>ລະຫັດຂອງທ່ານ: <strong>{code}</strong>' },
+  'aff.caption':     { en:'Your post caption', lo:'ຂໍ້ຄວາມໂພສຂອງທ່ານ' },
+  'aff.shareNow':    { en:'Share now', lo:'ແບ່ງປັນດຽວນີ້' },
+  'aff.copy':        { en:'Copy', lo:'ຄັດລອກ' },
+  'aff.aiImprove':   { en:'Improve with AI', lo:'ປັບປຸງດ້ວຍ AI' },
+  'aff.viewEarnings':{ en:'View my earnings', lo:'ເບິ່ງລາຍໄດ້ຂອງຂ້ອຍ' },
+  'aff.myEarnings':  { en:'My <em style="color:var(--rose-dark)">earnings</em>', lo:'ລາຍໄດ້<em style="color:var(--rose-dark)">ຂອງຂ້ອຍ</em>' },
+  'aff.commission':  { en:'commission earned ({rate}% of sales)', lo:'ຄ່າຄອມມິຊັ່ນທີ່ໄດ້ຮັບ ({rate}% ຂອງຍອດຂາຍ)' },
+  'aff.ordersLbl':   { en:'orders', lo:'ການສັ່ງຊື້' },
+  'aff.salesLbl':    { en:'sales referred', lo:'ຍອດຂາຍທີ່ແນະນຳ' },
+  'aff.payout':      { en:'Your code: <strong>{code}</strong> · We\'ll contact you at {phone} to pay out.', lo:'ລະຫັດຂອງທ່ານ: <strong>{code}</strong> · ເຮົາຈະຕິດຕໍ່ທ່ານທີ່ {phone} ເພື່ອຈ່າຍ.' },
+  'aff.loading':     { en:'Loading…', lo:'ກຳລັງໂຫລດ…' },
+  'aff.shareBtn':    { en:'Share &amp; earn {rate}% commission', lo:'ແບ່ງປັນ ແລະ ຮັບຄ່າຄອມມິຊັ່ນ {rate}%' },
+  'aff.linkReady':   { en:'🎉 Your share link is ready!', lo:'🎉 ລິ້ງແບ່ງປັນຂອງທ່ານພ້ອມແລ້ວ!' },
+  'aff.enterInfo':   { en:'Please enter your name and phone', lo:'ກະລຸນາໃສ່ຊື່ ແລະ ເບີໂທຂອງທ່ານ' },
+  'aff.copied':      { en:'Caption copied! Paste it on Facebook.', lo:'ຄັດລອກຂໍ້ຄວາມແລ້ວ! ວາງໃສ່ Facebook.' },
+  'aff.copiedPaste': { en:'Caption copied — paste it on Facebook & attach the photo.', lo:'ຄັດລອກຂໍ້ຄວາມແລ້ວ — ວາງໃສ່ Facebook ແລະ ແນບຮູບພາບ.' },
+  'aff.getFirst':    { en:'Get your share link first.', lo:'ຮັບລິ້ງແບ່ງປັນຂອງທ່ານກ່ອນ.' },
+  'aff.aiDone':      { en:'✨ Caption improved!', lo:'✨ ປັບປຸງຂໍ້ຄວາມແລ້ວ!' },
 };
 
 function t(key, fallback) {
   const e = I18N[key];
   if (!e) return fallback !== undefined ? fallback : key;
   return e[LANG] !== undefined ? e[LANG] : (e.en || key);
+}
+// Like t() but fills {placeholders} from a vars object
+function tf(key, vars) {
+  let s = t(key);
+  if (vars) Object.keys(vars).forEach(k => { s = s.split('{' + k + '}').join(vars[k]); });
+  return s;
 }
 
 function applyI18n(root) {
@@ -3068,6 +3218,12 @@ function loadDB() {
     if (!data.suppliers) data.suppliers = [];
     if (!data.plCosts) data.plCosts = {};
     if (!data.promotions) data.promotions = { banner:{active:false,text:'',color:'rose'}, flashSale:{active:false,productId:'',discountPct:20,endsAt:''}, reviews:{active:false,items:[]}, crossSells:{} };
+    if (!data.affiliates) data.affiliates = {};
+    if (data.settings) {
+      if (!('affiliateEnabled' in data.settings)) data.settings.affiliateEnabled = true;
+      if (!('affiliateRate' in data.settings))    data.settings.affiliateRate = 10;     // % of sale
+      if (!('affiliateBasis' in data.settings))   data.settings.affiliateBasis = 'full'; // 'full' | 'deposit'
+    }
     return data;
   }
   return {
@@ -3089,8 +3245,9 @@ function loadDB() {
       { id: 'VN0005', date: '2026-05-25', name: 'Phout Senthala', phone: '02055667788', addr: 'Savannakhet', items: [{name:'Pleated Midi Skirt', size:'L', color:'Rust', qty:1, price:155000}], total: 155000, logistics: 'HAL + Anousith', status: 'pending', paymentStatus: 'unpaid', notes: '' },
     ],
     defaults: { cost: 80000, ship: 25000, pack: 3000, bank: 2000, margin: 30, tax: 0 },
-    settings: { sheetUrl: '', tgToken: '', tgChat: '', bcelQR: '', firebaseConfig: '' },
+    settings: { sheetUrl: '', tgToken: '', tgChat: '', bcelQR: '', firebaseConfig: '', affiliateEnabled: true, affiliateRate: 10, affiliateBasis: 'full' },
     suppliers: [],
+    affiliates: {},
     plCosts: {},
     promotions: { banner:{active:false,text:'',color:'rose'}, flashSale:{active:false,productId:'',discountPct:20,endsAt:''}, reviews:{active:false,items:[]}, crossSells:{} },
     cart: []
@@ -3384,6 +3541,7 @@ function adminGoto(pane) {
   if (pane === 'salesai') renderSalesMarketing();
   if (pane === 'pl') renderPL();
   if (pane === 'promo') renderPromoAdmin();
+  if (pane === 'affiliates') fbLoadAffiliates();
 }
 
 // ============== PRODUCTS DISPLAY ==============
@@ -3549,9 +3707,12 @@ function renderProducts() {
       : `<div class="product-price">${fmtLAK(p.price)}</div>`;
     const saleBadge = onSale ? `<div class="flash-sale-badge">-${fs.discountPct}% OFF</div>` : '';
     const imgHtml = imgFor(p, i).replace('class="product-img"', 'class="product-img" style="position:relative;"');
+    const shareBtn = (db.settings.affiliateEnabled !== false)
+      ? `<button class="product-share-btn" title="${t('aff.shareNow')}" onclick="event.stopPropagation();openShareModal('${p.id}','affiliate')"><i class="ti ti-share"></i></button>`
+      : '';
     return `
     <div class="product" onclick="openProduct('${p.id}')">
-      <div style="position:relative;">${imgFor(p,i)}${saleBadge}</div>
+      <div style="position:relative;">${imgFor(p,i)}${saleBadge}${shareBtn}</div>
       <div class="product-name">${sanitizeHTML(p.name)}</div>
       <div class="product-meta">${sanitizeHTML(p.cat)}</div>
       ${priceHtml}
@@ -3665,6 +3826,7 @@ function openProduct(id) {
         <button class="btn-primary" onclick="addToCart('${p.id}')"><i class="ti ti-shopping-bag"></i> ${t('product.addToCart')}</button>
       </div>
     </div>
+    ${(db.settings.affiliateEnabled !== false) ? `<button class="btn-secondary" style="width:100%;margin-top:10px;" onclick="openShareModal('${p.id}','affiliate')"><i class="ti ti-share"></i> ${tf('aff.shareBtn', { rate: (+db.settings.affiliateRate||0) })}</button>` : ''}
     <p style="font-size: 0.8rem; color: rgba(26,22,18,0.5); margin-top: 1rem;">7–14 day delivery to Laos · No-questions return if wrong size</p>
     ${crossSellHtml}
   `;
@@ -3773,6 +3935,8 @@ function submitOrder() {
   const orderId = 'VN' + String(db.orders.length + 1).padStart(4, '0');
   const total = cartTotal();
   const depositAmount = Math.round(total * DEPOSIT_PCT / 100);
+  const refCode = (db.settings.affiliateEnabled !== false) ? getActiveRef() : null;
+  const refName = refCode && db.affiliates && db.affiliates[refCode] ? db.affiliates[refCode].name : '';
   const order = {
     id: orderId,
     date: new Date().toISOString().slice(0,10),
@@ -3782,12 +3946,14 @@ function submitOrder() {
     depositAmount,
     remainingAmount: total - depositAmount,
     status: 'pending',
-    paymentStatus: 'unpaid'
+    paymentStatus: 'unpaid',
+    ...(refCode ? { referredBy: refCode, referrerName: refName } : {})
   };
   db.orders.unshift(order);
   db.cart = [];
   saveDB();
   fbSaveOrder(order);
+  if (refCode) creditAffiliate(refCode, order);
   sheetSaveOrder(order);
   updateCartCount();
   closeModal('modal-checkout');
@@ -4129,7 +4295,7 @@ function renderOrders() {
     const finSlipLink = o.finalSlipImg ? `<a href="#" onclick="viewSlip('${o.id}','final');return false;" style="font-size:0.75rem;color:#5B21B6;text-decoration:underline;display:block;">Final slip</a>` : '';
     return `<tr>
       <td><strong>${o.id}</strong></td>
-      <td>${o.name}</td>
+      <td>${o.name}${o.referredBy ? `<br><span style="font-size:0.68rem;color:var(--rose-dark);background:rgba(160,95,73,0.12);padding:1px 6px;border-radius:99px;white-space:nowrap;" title="Affiliate referral"><i class="ti ti-users"></i> ${sanitizeHTML(o.referrerName||o.referredBy)}</span>` : ''}</td>
       <td>${o.phone}</td>
       <td>${o.items.map(i=>i.name).join(', ')}</td>
       <td>${thumbs}</td>
@@ -4207,6 +4373,7 @@ function renderAdminProducts() {
       <td>${mPct}%</td>
       <td style="white-space:nowrap;">
         <button class="btn-secondary" style="padding:6px 12px;font-size:0.78rem;margin-bottom:4px;" onclick="openEditProduct('${p.id}')"><i class="ti ti-pencil"></i> Edit</button>
+        <button class="btn-secondary" style="padding:6px 12px;font-size:0.78rem;margin-bottom:4px;" onclick="openShareModal('${p.id}','admin')"><i class="ti ti-brand-facebook"></i> Share</button>
         <button class="cart-remove" onclick="delProduct('${p.id}')"><i class="ti ti-trash"></i></button>
       </td>
     </tr>`;
@@ -5847,7 +6014,7 @@ function fbSaveCatalog() {
       defaults:   db.defaults   || {},
       suppliers:  db.suppliers  || [],
       plCosts:    db.plCosts    || {},
-      settings:   { sheetUrl: db.settings.sheetUrl||'', tgToken: db.settings.tgToken||'', tgChat: db.settings.tgChat||'', bcelQR: db.settings.bcelQR||'' },
+      settings:   { sheetUrl: db.settings.sheetUrl||'', tgToken: db.settings.tgToken||'', tgChat: db.settings.tgChat||'', bcelQR: db.settings.bcelQR||'', affiliateEnabled: db.settings.affiliateEnabled!==false, affiliateRate: +db.settings.affiliateRate||0, affiliateBasis: db.settings.affiliateBasis||'full' },
     };
     _fbDb.ref(FB_ROOT + '/catalog').set(cat)
       .then(() => { _catalogDirty = false; document.getElementById('fb-last-sync').textContent = 'Last sync: ' + new Date().toLocaleTimeString(); })
@@ -5901,7 +6068,459 @@ function fbPushAll() {
   toast('All data pushed to Firebase!');
 }
 
+// ============================================================
+//  AFFILIATE  /  SHARE-TO-EARN
+// ============================================================
+const AFF_REF_KEY = 'vncloset_ref';        // referral code that credited this visitor
+const AFF_ME_KEY  = 'vncloset_affiliate';  // this device's own affiliate identity
+const AFF_REF_TTL = 30 * 24 * 60 * 60 * 1000; // referral valid for 30 days
+let _shareProductId = '';
+let _shareMode = 'affiliate';   // 'affiliate' (customer) | 'admin'
+let _shareImgUrl = '';
+
+// ---- Capture ?ref= and ?p= on page load ----
+function initReferral() {
+  try {
+    const params = new URLSearchParams(location.search);
+    const ref = params.get('ref');
+    if (ref) localStorage.setItem(AFF_REF_KEY, JSON.stringify({ code: ref.toUpperCase().slice(0,12), ts: Date.now() }));
+    const pid = params.get('p');
+    if (pid) setTimeout(() => { if (db.products.find(x => x.id === pid)) openProduct(pid); }, 700);
+  } catch(e) {}
+}
+function getActiveRef() {
+  try {
+    const o = JSON.parse(localStorage.getItem(AFF_REF_KEY) || 'null');
+    if (!o || !o.code || Date.now() - (o.ts || 0) > AFF_REF_TTL) return null;
+    return o.code;
+  } catch(e) { return null; }
+}
+function getMyAffiliate() {
+  try { return JSON.parse(localStorage.getItem(AFF_ME_KEY) || 'null'); } catch(e) { return null; }
+}
+function genAffCode(name) {
+  const base = (name || 'VN').replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || 'VN';
+  return base + Math.random().toString(36).slice(2, 6).toUpperCase();
+}
+
+// ---- Smart Lao caption (works with no API key) ----
+function buildCaption(p, link) {
+  const sizes = (p.sizes || []).join(', ');
+  const colors = (p.colors || []).join(', ');
+  const lines = [`✨ ${p.name} ✨`, `💰 ລາຄາ: ${fmtLAK(p.price)}`];
+  if (sizes)  lines.push(`📏 ຂະໜາດ: ${sizes}`);
+  if (colors) lines.push(`🎨 ສີ: ${colors}`);
+  lines.push('', '🛍️ ສັ່ງຈອງລ່ວງໜ້າຈາກຫວຽດນາມ — ມັດຈຳ 50% ຢືນຢັນ, ສົ່ງເຖິງລາວພາຍໃນ 7–14 ມື້!',
+    '👇 ສັ່ງເລີຍທີ່ລິ້ງນີ້:', link, '',
+    '#ສັ່ງຈອງ #ແຟຊັນຫວຽດນາມ #vncloset #ເສື້ອຜ້າແຟຊັນ #ລາວ');
+  return lines.join('\n');
+}
+function shareLink(p) {
+  const base = location.origin + location.pathname;
+  if (_shareMode === 'affiliate') {
+    const me = getMyAffiliate();
+    return base + '?ref=' + (me ? me.code : '') + '&p=' + p.id;
+  }
+  return base + '?p=' + p.id;
+}
+
+function openShareModal(pid, mode) {
+  const p = db.products.find(x => x.id === pid);
+  if (!p) return;
+  _shareProductId = pid;
+  _shareMode = mode || (_adminUnlocked ? 'admin' : 'affiliate');
+  document.getElementById('modal-share').classList.add('show');
+  const signup = document.getElementById('share-signup');
+  const body   = document.getElementById('share-body');
+  const sub    = document.getElementById('share-sub');
+  const earnNote = document.getElementById('share-earn-note');
+  const earnActions = document.getElementById('share-earn-actions');
+  document.getElementById('ai-improve-btn').style.display = db.settings.anthropicKey ? '' : 'none';
+  const rate = +db.settings.affiliateRate || 0;
+
+  if (_shareMode === 'affiliate' && db.settings.affiliateEnabled !== false) {
+    const me = getMyAffiliate();
+    if (!me) {
+      sub.textContent = tf('aff.subEarn', { rate });
+      signup.style.display = ''; body.style.display = 'none';
+      return;
+    }
+    earnNote.innerHTML = tf('aff.earnNote', { rate, code: me.code });
+    earnNote.style.display = ''; earnActions.style.display = '';
+  } else {
+    sub.textContent = t('aff.subAdmin');
+    earnNote.style.display = 'none'; earnActions.style.display = 'none';
+  }
+  signup.style.display = 'none'; body.style.display = '';
+  prepareShareContent();
+}
+function prepareShareContent() {
+  const p = db.products.find(x => x.id === _shareProductId);
+  if (!p) return;
+  const link = shareLink(p);
+  document.getElementById('share-caption').value = buildCaption(p, link);
+  _shareImgUrl = getImgs(p)[0] || '';
+  const wrap = document.getElementById('share-img-wrap');
+  wrap.innerHTML = _shareImgUrl
+    ? `<img src="${_shareImgUrl}" style="max-height:160px;border-radius:10px;border:1px solid var(--line);" onerror="this.style.display='none'">`
+    : '';
+}
+async function affiliateSignup() {
+  const name  = sanitizeInput(document.getElementById('aff-name').value, 80);
+  const phone = sanitizeInput(document.getElementById('aff-phone').value, 30);
+  if (!name || !phone) { toast(t('aff.enterInfo')); return; }
+  const pkey = normalizePhone(phone);
+  // Identity = phone. If this phone already signed up, reuse the same code so
+  // one person never ends up with several codes (and split/duplicate payouts).
+  let code = '';
+  try {
+    if (_fbDb && pkey) {
+      const snap = await _fbDb.ref(FB_ROOT + '/affiliates_by_phone/' + pkey).once('value');
+      if (snap.val()) code = snap.val();
+    }
+  } catch(e) {}
+  const isNew = !code;
+  if (!code) code = genAffCode(name);
+  const aff = { code, name, phone, createdAt: Date.now() };
+  localStorage.setItem(AFF_ME_KEY, JSON.stringify(aff));
+  db.affiliates = db.affiliates || {};
+  db.affiliates[code] = Object.assign(db.affiliates[code] || {}, aff);
+  saveDB();
+  fbSaveAffiliate(aff);
+  if (_fbDb && pkey && isNew) _fbDb.ref(FB_ROOT + '/affiliates_by_phone/' + pkey).set(code).catch(()=>{});
+  toast(t('aff.linkReady'));
+  openShareModal(_shareProductId, 'affiliate');
+}
+
+async function urlToFile(url, filename) {
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return new File([blob], filename, { type: blob.type || 'image/jpeg' });
+  } catch(e) { return null; }
+}
+async function doNativeShare() {
+  const caption = document.getElementById('share-caption').value;
+  const p = db.products.find(x => x.id === _shareProductId);
+  const link = shareLink(p);
+  try {
+    if (navigator.canShare && _shareImgUrl) {
+      const file = await urlToFile(_shareImgUrl, (p.name || 'product').replace(/\s+/g,'_') + '.jpg');
+      if (file && navigator.canShare({ files: [file] })) {
+        await navigator.share({ text: caption, files: [file] });
+        return;
+      }
+    }
+    if (navigator.share) { await navigator.share({ text: caption, url: link }); return; }
+  } catch(e) { if (e.name === 'AbortError') return; }
+  // Desktop / unsupported: copy caption + open Facebook
+  copyCaptionSilent();
+  openFacebookShare();
+  toast(t('aff.copiedPaste'));
+}
+function copyCaptionSilent() {
+  const ta = document.getElementById('share-caption');
+  try { navigator.clipboard && navigator.clipboard.writeText(ta.value); }
+  catch(e) { ta.select(); document.execCommand('copy'); }
+}
+function copyCaption() { copyCaptionSilent(); toast(t('aff.copied')); }
+function openFacebookShare() {
+  const p = db.products.find(x => x.id === _shareProductId);
+  copyCaptionSilent();
+  const u = encodeURIComponent(shareLink(p));
+  const quote = encodeURIComponent(document.getElementById('share-caption').value);
+  window.open('https://www.facebook.com/sharer/sharer.php?u=' + u + '&quote=' + quote, '_blank', 'noopener');
+}
+async function aiImproveCaption() {
+  const apiKey = db.settings.anthropicKey;
+  if (!apiKey) { toast('Add your Anthropic API key in Settings to use AI.'); return; }
+  const p = db.products.find(x => x.id === _shareProductId);
+  const link = shareLink(p);
+  const btn = document.getElementById('ai-improve-btn');
+  btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader" style="animation:spin 1s linear infinite;"></i> Writing…';
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-opus-4-8', max_tokens: 600, messages: [{ role: 'user', content:
+`Write a short, catchy Facebook caption in LAO language to sell this pre-order fashion item for a shop called VN Closet (Vietnam fashion delivered to Laos). Use emojis, be warm and persuasive, include the price, sizes and colors, mention 50% deposit pre-order and 7–14 day delivery, and add 4–6 relevant Lao hashtags. End with this exact link on its own final line: ${link}
+Product: ${p.name}; price ${fmtLAK(p.price)}; sizes ${(p.sizes||[]).join(', ')}; colors ${(p.colors||[]).join(', ')}.
+Return ONLY the caption text, no preamble or quotes.` }] })
+    });
+    if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message || 'API error'); }
+    const data = await resp.json();
+    const txt = data.content && data.content[0] && data.content[0].text;
+    if (txt) document.getElementById('share-caption').value = txt.trim();
+    toast(t('aff.aiDone'));
+  } catch(e) { toast('AI error: ' + e.message); }
+  btn.disabled = false; btn.innerHTML = '<i class="ti ti-sparkles"></i> Improve with AI';
+}
+
+// ---- Affiliate identity in Firebase ----
+function fbSaveAffiliate(aff) {
+  if (!_fbDb) return;
+  _fbDb.ref(FB_ROOT + '/affiliates/' + aff.code).update({ code: aff.code, name: aff.name, phone: aff.phone, createdAt: aff.createdAt })
+    .catch(e => console.warn('affiliate save:', e.message));
+}
+// Credit an affiliate when a referred order is placed (aggregate only — no PII to read)
+function creditAffiliate(code, order) {
+  if (!_fbDb || !code) return;
+  const basis = db.settings.affiliateBasis || 'full';
+  const amount = basis === 'deposit'
+    ? (order.depositAmount || Math.round(order.total * DEPOSIT_PCT / 100))
+    : order.total;
+  try {
+    const inc = firebase.database.ServerValue.increment;
+    _fbDb.ref(FB_ROOT + '/affiliates/' + code + '/refOrders').set(inc(1)).catch(()=>{});
+    _fbDb.ref(FB_ROOT + '/affiliates/' + code + '/refSales').set(inc(amount)).catch(()=>{});
+  } catch(e) { console.warn('credit affiliate:', e.message); }
+}
+// Affiliate self-service earnings (reads only their own aggregate node)
+function showMyEarnings() {
+  const me = getMyAffiliate();
+  if (!me) { toast(t('aff.getFirst')); return; }
+  const body = document.getElementById('earnings-body');
+  document.getElementById('modal-earnings').classList.add('show');
+  body.innerHTML = `<p style="color:rgba(26,22,18,0.5);">${t('aff.loading')}</p>`;
+  const rate = +db.settings.affiliateRate || 0;
+  const done = (orders, sales) => {
+    const commission = Math.round(sales * rate / 100);
+    body.innerHTML = `
+      <div style="background:var(--cream);border-radius:12px;padding:16px;text-align:center;margin-bottom:12px;">
+        <div style="font-size:2rem;font-weight:700;color:var(--rose-dark);">${fmtLAK(commission)}</div>
+        <div style="font-size:0.8rem;color:rgba(26,22,18,0.55);">${tf('aff.commission', { rate })}</div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;text-align:center;border:1px solid var(--line);border-radius:10px;padding:12px;"><div style="font-size:1.3rem;font-weight:700;">${orders}</div><div style="font-size:0.75rem;color:rgba(26,22,18,0.55);">${t('aff.ordersLbl')}</div></div>
+        <div style="flex:1;text-align:center;border:1px solid var(--line);border-radius:10px;padding:12px;"><div style="font-size:1.3rem;font-weight:700;">${fmtLAK(sales)}</div><div style="font-size:0.75rem;color:rgba(26,22,18,0.55);">${t('aff.salesLbl')}</div></div>
+      </div>
+      <p style="font-size:0.76rem;color:rgba(26,22,18,0.5);margin-top:12px;text-align:center;">${tf('aff.payout', { code: me.code, phone: me.phone })}</p>`;
+  };
+  if (_fbDb) {
+    _fbDb.ref(FB_ROOT + '/affiliates/' + me.code).once('value').then(snap => {
+      const a = snap.val() || {};
+      done(a.refOrders || 0, a.refSales || 0);
+    }).catch(() => done(0, 0));
+  } else { done(0, 0); }
+}
+
+// ---- Admin: affiliates panel ----
+function fbLoadAffiliates() {
+  if (!_fbDb) { renderAffiliates(); return; }
+  _fbDb.ref(FB_ROOT + '/affiliates').once('value').then(snap => {
+    const a = snap.val();
+    if (a) { db.affiliates = a; }
+    renderAffiliates();
+  }).catch(() => renderAffiliates());
+}
+function saveAffiliateSettings() {
+  db.settings.affiliateEnabled = document.getElementById('aff-set-enabled').value === 'yes';
+  db.settings.affiliateRate    = Math.max(0, Math.min(100, +document.getElementById('aff-set-rate').value || 0));
+  db.settings.affiliateBasis   = document.getElementById('aff-set-basis').value;
+  saveDB();
+  renderAffiliates();
+  renderProducts();
+  toast('Affiliate settings saved');
+}
+function renderAffiliates() {
+  // settings inputs
+  const en = document.getElementById('aff-set-enabled');
+  if (en) {
+    en.value = (db.settings.affiliateEnabled !== false) ? 'yes' : 'no';
+    document.getElementById('aff-set-rate').value = (+db.settings.affiliateRate || 0);
+    document.getElementById('aff-set-basis').value = db.settings.affiliateBasis || 'full';
+  }
+  const rate = +db.settings.affiliateRate || 0;
+  const basis = db.settings.affiliateBasis || 'full';
+  const affs = Object.values(db.affiliates || {});
+
+  // ---------- SMART PROFIT IMPACT: does the commission still leave a profit? ----------
+  const basisAmt = price => basis === 'deposit' ? Math.round(price * DEPOSIT_PCT / 100) : price;
+  const rows = (db.products || []).map(p => {
+    const cost = (p.cost||0) + (p.ship||0) + (db.defaults.pack||0) + (db.defaults.bank||0);
+    const profit = (p.price||0) - cost;
+    const ba = basisAmt(p.price||0);
+    const commission = Math.round(ba * rate / 100);
+    const net = profit - commission;
+    const maxRate = ba > 0 ? Math.floor(profit / ba * 100) : 0; // highest rate before this item loses money
+    return { p, cost, profit, commission, net, maxRate };
+  });
+  const sellable = rows.filter(r => r.profit > 0);
+  const lossRows = rows.filter(r => r.net < 0);
+  const safeMax = sellable.length ? Math.max(0, Math.min(...sellable.map(r => r.maxRate))) : 0;
+  // sweet spot: affiliate takes at most ~40% of the profit, owner keeps the rest
+  const recRows = sellable.map(r => { const ba = basisAmt(r.p.price); return ba>0 ? Math.floor(0.4 * r.profit / ba * 100) : 0; });
+  const recommended = recRows.length ? Math.max(1, Math.min(...recRows)) : 0;
+  const avgNetMargin = sellable.length ? Math.round(sellable.reduce((s,r)=>s + (r.net / r.p.price * 100), 0) / sellable.length) : 0;
+
+  const impact = document.getElementById('aff-profit-impact');
+  if (impact) {
+    let box;
+    if (rate === 0) {
+      box = `<div style="background:rgba(26,22,18,0.05);border-radius:10px;padding:12px 14px;font-size:0.85rem;">Commission is <strong>0%</strong> — affiliates earn nothing yet. Set a rate to reward sharing.</div>`;
+    } else if (lossRows.length) {
+      box = `<div style="background:rgba(200,74,58,0.1);border:1px solid rgba(200,74,58,0.4);border-radius:10px;padding:12px 14px;font-size:0.85rem;color:#b3392b;">
+        ⚠️ <strong>Warning — you LOSE money on ${lossRows.length} product${lossRows.length>1?'s':''} at ${rate}%:</strong>
+        ${lossRows.slice(0,4).map(r=>sanitizeHTML(r.p.name)).join(', ')}${lossRows.length>4?'…':''}.<br>
+        Lower the rate to <strong>${safeMax}%</strong> or below, or raise those prices.</div>`;
+    } else {
+      box = `<div style="background:rgba(29,158,117,0.1);border:1px solid rgba(29,158,117,0.35);border-radius:10px;padding:12px 14px;font-size:0.85rem;color:#147a59;">
+        ✅ <strong>Safe at ${rate}%.</strong> After paying commission you still profit on every product — keeping about <strong>${avgNetMargin}%</strong> margin on average. You could go up to <strong>${safeMax}%</strong> before any item loses money.</div>`;
+    }
+    const tip = recommended ? `<p style="font-size:0.82rem;color:var(--rose-dark);margin-top:8px;">💡 <strong>Suggested: ${recommended}%</strong> — a fair reward for sharers while you keep most of the profit.</p>` : '';
+    const how = `<p style="font-size:0.78rem;color:rgba(26,22,18,0.55);margin-top:8px;line-height:1.5;">You only pay commission when an affiliate's link makes a real sale — it comes out of <em>that sale's</em> profit, never your own pocket. No sale = no commission. Each row below shows what you keep after paying.</p>`;
+    impact.innerHTML = box + tip + how;
+  }
+
+  const ch = document.getElementById('aff-pt-commhead');
+  if (ch) ch.textContent = `Commission (${rate}%${basis==='deposit'?' of deposit':''})`;
+  const ptbody = document.getElementById('aff-profit-table');
+  if (ptbody) {
+    ptbody.innerHTML = rows.length ? rows.map(r => {
+      const danger = r.net < 0;
+      const thin = !danger && r.net < r.p.price * 0.1;
+      const col = danger ? '#c84a3a' : (thin ? '#b3892b' : '#1D9E75');
+      const flag = danger ? ' ⚠️' : '';
+      return `<tr${danger?' style="background:rgba(200,74,58,0.06);"':''}>
+        <td><strong>${sanitizeHTML(r.p.name)}</strong></td>
+        <td>${fmtLAK(r.p.price)}</td>
+        <td>${fmtLAK(r.cost)}</td>
+        <td>${fmtLAK(r.profit)}</td>
+        <td style="color:var(--rose-dark);">−${fmtLAK(r.commission)}</td>
+        <td style="color:${col};font-weight:700;">${fmtLAK(r.net)}${flag}</td>
+      </tr>`;
+    }).join('') : `<tr><td colspan="6" style="text-align:center;color:rgba(26,22,18,0.4);padding:1.5rem;">No products yet.</td></tr>`;
+  }
+
+  // ---------- WHO TO PAY (grouped by person = phone, so duplicates never get paid twice) ----------
+  const tally = {}; // code -> { orders, sales }
+  const selfByCode = {}; // code -> count of self-referred orders (buyer phone == affiliate phone)
+  const codePhone = {};
+  affs.forEach(a => { codePhone[a.code] = normalizePhone(a.phone); });
+  (db.orders || []).forEach(o => {
+    if (!o.referredBy) return;
+    const amt = basis === 'deposit' ? (o.depositAmount || Math.round(o.total * DEPOSIT_PCT / 100)) : o.total;
+    const tEntry = tally[o.referredBy] || (tally[o.referredBy] = { orders: 0, sales: 0 });
+    tEntry.orders++; tEntry.sales += amt;
+    if (codePhone[o.referredBy] && codePhone[o.referredBy] === normalizePhone(o.phone)) selfByCode[o.referredBy] = (selfByCode[o.referredBy]||0) + 1;
+  });
+
+  // Group affiliate codes by person (normalized phone; fall back to code if no phone)
+  const groups = {};
+  affs.forEach(a => {
+    const key = normalizePhone(a.phone) || ('code:' + a.code);
+    const g = groups[key] || (groups[key] = { name: a.name||'', phone: a.phone||'', codes: [], orders: 0, sales: 0, self: 0, createdAt: a.createdAt||0, paidCount: 0, salesCodes: 0 });
+    const tl = tally[a.code] || { orders:0, sales:0 };
+    g.codes.push(a.code);
+    g.orders += tl.orders; g.sales += tl.sales;
+    g.self += selfByCode[a.code] || 0;
+    if (tl.orders) { g.salesCodes++; if (a.paid) g.paidCount++; }
+    if (!g.name && a.name) g.name = a.name;
+    g.createdAt = Math.min(g.createdAt || a.createdAt || 0, a.createdAt || 0);
+  });
+  const groupList = Object.values(groups).map(g => {
+    g.commission = Math.round(g.sales * rate / 100);
+    g.paid = g.salesCodes > 0 && g.paidCount >= g.salesCodes;
+    g.dupe = g.codes.length > 1;
+    return g;
+  });
+
+  const totalOrders = groupList.reduce((s,g)=>s+g.orders,0);
+  const totalSales = groupList.reduce((s,g)=>s+g.sales,0);
+  const toPay = groupList.reduce((s,g)=>s + (g.paid ? 0 : g.commission), 0);
+
+  const statsEl = document.getElementById('aff-stats');
+  if (statsEl) statsEl.innerHTML = `
+    <div class="stat"><div class="stat-label">People</div><div class="stat-val">${groupList.length}<small>${affs.length} code${affs.length!==1?'s':''}</small></div></div>
+    <div class="stat"><div class="stat-label">Referred orders</div><div class="stat-val">${totalOrders}</div></div>
+    <div class="stat"><div class="stat-label">Sales referred</div><div class="stat-val">${fmtLAK(totalSales)}</div></div>
+    <div class="stat"><div class="stat-label">To pay now (unpaid)</div><div class="stat-val" style="color:var(--rose-dark);">${fmtLAK(toPay)}</div></div>`;
+
+  const tbody = document.getElementById('aff-table');
+  const countEl = document.getElementById('aff-count');
+  if (!tbody) return;
+  if (!affs.length) { tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:rgba(26,22,18,0.4);padding:2rem;">No affiliates yet. Customers appear here once they share a product and sign up.</td></tr>`; if (countEl) countEl.textContent=''; return; }
+
+  // search + filter
+  const q = (document.getElementById('aff-search')?.value || '').trim().toLowerCase();
+  const filt = document.getElementById('aff-filter')?.value || 'all';
+  let view = groupList.filter(g => {
+    if (q && !((g.name||'').toLowerCase().includes(q) || (g.phone||'').toLowerCase().includes(q) || g.codes.join(' ').toLowerCase().includes(q))) return false;
+    if (filt === 'unpaid') return g.orders > 0 && !g.paid;
+    if (filt === 'sales')  return g.orders > 0;
+    if (filt === 'dupe')   return g.dupe;
+    if (filt === 'self')   return g.self > 0;
+    return true;
+  });
+  view.sort((a,b) => (b.sales - a.sales) || (b.commission - a.commission));
+  const CAP = 200;
+  const shown = view.slice(0, CAP);
+  if (countEl) countEl.textContent = `Showing ${shown.length} of ${view.length} people${view.length!==groupList.length?` (filtered from ${groupList.length})`:''}` + (view.length>CAP?` — refine your search to see more`:'');
+
+  tbody.innerHTML = shown.length ? shown.map(g => {
+    const codesHtml = g.codes.map(c => `<code style="font-size:0.75rem;">${c}</code>`).join(' ');
+    const flags = (g.dupe ? `<span title="Same phone used more than once" style="font-size:0.66rem;background:rgba(179,137,43,0.15);color:#8a6a1f;padding:1px 6px;border-radius:99px;margin-left:4px;">⚠ ${g.codes.length} codes</span>` : '')
+      + (g.self ? `<span title="Bought through their own link" style="font-size:0.66rem;background:rgba(200,74,58,0.12);color:#b3392b;padding:1px 6px;border-radius:99px;margin-left:4px;">⚠ self ×${g.self}</span>` : '');
+    const action = g.orders ? (g.paid
+      ? `<span style="color:#1D9E75;font-weight:600;">Paid ✓</span>`
+      : `<button class="btn-secondary" style="padding:5px 10px;font-size:0.75rem;" onclick="markPersonPaid('${g.codes.join(',')}')">Mark paid</button>`) : '—';
+    return `<tr>
+      <td><strong>${sanitizeHTML(g.name||'')}</strong>${flags}</td>
+      <td style="white-space:nowrap;">${sanitizeHTML(g.phone||'')}</td>
+      <td>${codesHtml}</td>
+      <td>${g.orders}</td>
+      <td>${fmtLAK(g.sales)}</td>
+      <td style="color:var(--rose-dark);font-weight:600;">${fmtLAK(g.commission)}</td>
+      <td>${action}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="7" style="text-align:center;color:rgba(26,22,18,0.4);padding:1.5rem;">No matches.</td></tr>`;
+}
+function normalizePhone(p) { return String(p||'').replace(/\D/g, ''); }
+function markAffiliatePaid(code) { markPersonPaid(code); }
+function markPersonPaid(codesCsv) {
+  const codes = String(codesCsv).split(',').filter(Boolean);
+  codes.forEach(code => {
+    if (db.affiliates && db.affiliates[code]) db.affiliates[code].paid = true;
+    if (_fbDb) _fbDb.ref(FB_ROOT + '/affiliates/' + code + '/paid').set(true).catch(()=>{});
+  });
+  saveDB();
+  renderAffiliates();
+  toast('Marked as paid');
+}
+function exportAffiliatesCSV() {
+  const rate = +db.settings.affiliateRate || 0;
+  const basis = db.settings.affiliateBasis || 'full';
+  const tally = {};
+  (db.orders || []).forEach(o => {
+    if (!o.referredBy) return;
+    const amt = basis === 'deposit' ? (o.depositAmount || Math.round(o.total * DEPOSIT_PCT / 100)) : o.total;
+    const e = tally[o.referredBy] || (tally[o.referredBy] = { orders:0, sales:0 }); e.orders++; e.sales += amt;
+  });
+  const groups = {};
+  Object.values(db.affiliates || {}).forEach(a => {
+    const key = normalizePhone(a.phone) || ('code:'+a.code);
+    const g = groups[key] || (groups[key] = { name:a.name||'', phone:a.phone||'', codes:[], orders:0, sales:0, paidCodes:0, salesCodes:0 });
+    const tl = tally[a.code] || { orders:0, sales:0 };
+    g.codes.push(a.code); g.orders += tl.orders; g.sales += tl.sales;
+    if (tl.orders) { g.salesCodes++; if (a.paid) g.paidCodes++; }
+  });
+  const rows = [['Name','Phone','Codes','Orders','SalesReferred','Commission','Status']];
+  Object.values(groups).sort((a,b)=>b.sales-a.sales).forEach(g => {
+    const commission = Math.round(g.sales * rate / 100);
+    const status = g.salesCodes>0 && g.paidCodes>=g.salesCodes ? 'PAID' : (g.orders? 'UNPAID':'no sales');
+    rows.push([g.name, "'"+g.phone, g.codes.join(' '), g.orders, g.sales, commission, status]);
+  });
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'vncloset-affiliates-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click(); URL.revokeObjectURL(url);
+  toast('Exported affiliate payout list');
+}
+
 // ============== INIT ==============
+initReferral();
 initLang();
 renderProducts();
 updateCartCount();
